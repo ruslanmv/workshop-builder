@@ -1,0 +1,14 @@
+# Fdb version 4
+["pdflatex"] 1761566668.48581 "/Users/ruslanmv/workspace/workshop-builder/workshop_builder/src/templates/springer/template.tex" "template.pdf" "template" 1761566668.62545 2
+  "/Users/ruslanmv/workspace/workshop-builder/workshop_builder/src/templates/springer/template.tex" 1761565080.55843 2897 ec5e84008ace998303cf3949f94b19c7 ""
+  "/usr/local/texlive/2025/texmf-dist/web2c/texmf.cnf" 1739380943 42148 61becc7c670cd061bb319c643c27fdd4 ""
+  "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1759160126 3345740 45ecb021ae076aa741cd1b0435c72af1 ""
+  "/usr/local/texlive/2025/texmf.cnf" 1741450484 577 418a7058ec8e006d8704f60ecd22c938 ""
+  "svmono.cls" 0 -1 0 ""
+  "template.aux" 1761566668.48543 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "template.tex" 1761565080.55843 2897 ec5e84008ace998303cf3949f94b19c7 ""
+  (generated)
+  "template.aux"
+  "template.log"
+  "template.pdf"
+  (rewritten before read)

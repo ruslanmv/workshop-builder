@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "type": "journal",
+    "id": "acm",
+    "label": "ACM (Article)",
+    "blurb": "ACM article template (SIG styles)"
+  },
+  "payload": {
+    "maxWords": 7000,
+    "figureLimit": 6,
+    "readOnly": false,
+    "metadata": {
+      "title": "Article Title",
+      "doi": "",
+      "journal": "Proceedings of \u2026",
+      "keywords": [
+        "acm",
+        "sig"
+      ]
+    },
+    "sections": [
+      {
+        "type": "abstract",
+        "title": "Abstract",
+        "words": 250,
+        "depth": 0
+      },
+      {
+        "type": "methods",
+        "title": "Methods",
+        "words": 1750,
+        "depth": 0
+      },
+      {
+        "type": "results",
+        "title": "Results",
+        "words": 1750,
+        "depth": 0
+      },
+      {
+        "type": "discussion",
+        "title": "Discussion",
+        "words": 1750,
+        "depth": 0
+      },
+      {
+        "type": "references",
+        "title": "References",
+        "words": 700,
+        "depth": 0
+      }
+    ]
+  }
+}

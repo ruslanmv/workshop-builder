@@ -1,0 +1,80 @@
+# pyproject.toml — Workshop Builder (Flask UI + Universal A2A /knowledge)
+# Single, valid PEP 621 file with all required deps for app + RAG + CrewAI + watsonx.ai
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "workshop-builder"
+version = "1.3.0"
+description = "Workshop builder with Universal A2A + /knowledge + Flask UI (big docs ready)"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"   # constrain to avoid NumPy 2 split on 3.13+
+license = { file = "LICENSE" }
+authors = [{ name = "Ruslan Magana", email = "contact@ruslanmnv.com" }]
+
+# Runtime dependencies (backend + RAG + providers)
+dependencies = [
+  # Web / utilities
+  "Flask>=3.0,<4",
+  "python-dotenv>=1.0",
+  "PyYAML>=6.0",
+  "GitPython>=3.1",
+  "requests>=2.31",
+  "pydantic>=2.6",
+  "pydantic-settings>=2.3",
+  "structlog>=24.2",
+  "typing-extensions>=4.9",
+
+  # Vector DB client (works with Python 3.11 & NumPy<2 when <3.13)
+  "qdrant-client>=1.13,<1.16",
+
+  # Universal A2A Agent (FastAPI server, routers, adapters, RAG, CrewAI)
+  # Extras:
+  #  - watsonx: ibm-watsonx-ai + langchain-ibm
+  #  - langgraph: LangGraph + LangChain cores
+  #  - rag: chroma, qdrant client, crewai-tools, openai (embeddings)
+  #  - crewai: crewai + crewai-tools
+  "universal-a2a-agent[watsonx,langgraph,rag,crewai]>=0.1.3,<0.2.0",
+
+  # Optional niceties used by ingestion/export services (safe to keep here)
+  "markdownify>=0.11",        # HTML -> Markdown fallback
+  "pypdf>=4.0.0",             # PDF text extraction
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  "ruff>=0.6.9",
+  "black>=24.8.0",
+  "isort>=5.13.2",
+  "pre-commit>=3.8.0",
+  "ipykernel>=6.29.5",
+]
+docs = [
+  "mkdocs>=1.6.0",
+  "mkdocs-material>=9.5.0",
+]
+notebook = [
+  "jupyterlab>=4.2.0",
+  "ipykernel>=6.29.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/ruslanmv/workshop-builder"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+lint.select = ["E", "F", "I", "UP"]
+target-version = "py311"
+
+# Package discovery
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = true
+include = ["src*"]

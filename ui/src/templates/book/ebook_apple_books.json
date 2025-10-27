@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "ebook_apple_books",
+    "label": "Ebook \u2014 Apple Books",
+    "blurb": "EPUB with Apple Books metadata hints"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 42000,
+    "step": 500,
+    "sectionMaxWords": 15000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "Apple Books Edition",
+      "author": "Author",
+      "keywords": [
+        "apple",
+        "ebook"
+      ],
+      "layoutTemplate": "indesign",
+      "descriptionHTML": "<p>Optimized for Apple Books\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Preface",
+        "words": 1000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 1",
+        "words": 5500,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 2",
+        "words": 5500,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "References",
+        "words": 1200,
+        "depth": 0
+      }
+    ]
+  }
+}

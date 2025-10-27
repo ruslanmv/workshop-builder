@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "type": "blog",
+    "id": "minimal",
+    "label": "Minimal",
+    "blurb": "Clean typography, focus on reading"
+  },
+  "payload": {
+    "metadata": {
+      "title": "A Minimal Post",
+      "slug": "minimal-post",
+      "tags": [
+        "minimal"
+      ],
+      "author": "Author",
+      "date": "2025-01-01"
+    },
+    "constraints": {
+      "maxImageKB": 512,
+      "minWords": 600
+    },
+    "blocks": [
+      {
+        "type": "text",
+        "md": "Intro\u2026"
+      },
+      {
+        "type": "text",
+        "md": "Body\u2026"
+      }
+    ]
+  }
+}

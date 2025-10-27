@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "type": "journal",
+    "id": "aps_prc",
+    "label": "Physical Review C (PRC)",
+    "blurb": "Nuclear physics"
+  },
+  "payload": {
+    "maxWords": 8500,
+    "figureLimit": 6,
+    "readOnly": false,
+    "metadata": {
+      "title": "Article Title",
+      "doi": "",
+      "journal": "Phys. Rev. C",
+      "keywords": [
+        "aps",
+        "prc",
+        "physics"
+      ]
+    },
+    "sections": [
+      {
+        "type": "abstract",
+        "title": "Abstract",
+        "words": 250,
+        "depth": 0
+      },
+      {
+        "type": "methods",
+        "title": "Methods",
+        "words": 2125,
+        "depth": 0
+      },
+      {
+        "type": "results",
+        "title": "Results",
+        "words": 2125,
+        "depth": 0
+      },
+      {
+        "type": "discussion",
+        "title": "Discussion",
+        "words": 2125,
+        "depth": 0
+      },
+      {
+        "type": "references",
+        "title": "References",
+        "words": 850,
+        "depth": 0
+      }
+    ]
+  }
+}

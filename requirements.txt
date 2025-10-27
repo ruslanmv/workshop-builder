@@ -1,0 +1,12 @@
+# requirements.txt — fallback if you don't use uv/PEP 621
+Flask>=3.0,<4
+python-dotenv>=1.0
+PyYAML>=6.0
+GitPython>=3.1
+requests>=2.31
+pydantic>=2.6
+pydantic-settings>=2.3
+structlog>=24.2
+qdrant-client>=1.13
+universal-a2a-agent[watsonx,langgraph,rag,crewai]>=0.1.3
+gunicorn>=21.2

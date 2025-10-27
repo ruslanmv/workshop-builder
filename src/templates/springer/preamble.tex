@@ -1,0 +1,97 @@
+% src/templates/springer/preamble.tex
+% SPDX-License-Identifier: Apache-2.0
+% Global packages, fonts, listings, and link styling for Springer-like book
+% Requires XeLaTeX (fontspec). Keep lightweight and production-safe.
+% ----------------------------------------------------------------------
+
+% ------------------------- CORE PACKAGES -------------------------------
+\usepackage{graphicx}
+\usepackage{grffile}   % robust file names for images
+\usepackage{booktabs}  % nice tables
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{csquotes}
+\usepackage{url}
+\usepackage{float}
+\usepackage{etoolbox}
+
+% ---------------------------- FONTS ------------------------------------
+% XeLaTeX only
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman} % widely available; readable
+\setsansfont{Latin Modern Sans}
+\setmonofont{Latin Modern Mono}
+
+% -------------------------- PAGE GEOMETRY ------------------------------
+\usepackage[a4paper,margin=28mm]{geometry}
+
+% --------------------------- HYPERREF ----------------------------------
+\usepackage[unicode=true]{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black,
+  pdfauthor={%%AUTHORS%%},
+  pdftitle={%%TITLE%%},
+  pdfsubject={%%SUBTITLE%%},
+  pdfcreator={Workshop Builder},
+  pdfproducer={XeLaTeX},
+}
+
+% --------------------------- BIBLIOGRAPHY ------------------------------
+% Biblatex with biber backend. If exporter can't ship biber, you may switch
+% to natbib; biblatex gives nicer control though.
+\usepackage[
+  backend=biber,
+  style=numeric,
+  sorting=nyt,
+  maxcitenames=2,
+  maxbibnames=10
+]{biblatex}
+\IfFileExists{references.bib}{\addbibresource{references.bib}}{}
+
+% ---------------------------- LISTINGS ---------------------------------
+\usepackage{listings}
+\lstdefinestyle{wbstyle}{
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=6pt,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{black!20},
+  xleftmargin=\parindent,
+  framesep=6pt,
+  keepspaces=true,
+  tabsize=2,
+}
+\lstset{style=wbstyle}
+
+% Inline code convenience
+\newcommand{\inlinecode}[1]{\texttt{#1}}
+
+% ---------------------------- FIGURES ----------------------------------
+\graphicspath{{figures/}}
+
+% ----------------------------- TABLES ----------------------------------
+\renewcommand\arraystretch{1.2}
+
+% --------------------------- SECTIONING --------------------------------
+% Tighter spacing for a modern feel, but keep readable defaults
+\setlist[itemize]{topsep=3pt,itemsep=3pt,parsep=0pt,partopsep=0pt}
+\setlist[enumerate]{topsep=3pt,itemsep=3pt,parsep=0pt,partopsep=0pt}
+
+% ----------------------------- MISC ------------------------------------
+% Make long urls wrap better
+\usepackage{xurl}

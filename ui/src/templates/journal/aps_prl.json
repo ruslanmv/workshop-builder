@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "type": "journal",
+    "id": "aps_prl",
+    "label": "Physical Review Letters (PRL)",
+    "blurb": "Short letters; rapid publication"
+  },
+  "payload": {
+    "maxWords": 3750,
+    "figureLimit": 4,
+    "readOnly": false,
+    "metadata": {
+      "title": "Article Title",
+      "doi": "",
+      "journal": "Phys. Rev. Lett.",
+      "keywords": [
+        "aps",
+        "prl",
+        "physics"
+      ]
+    },
+    "sections": [
+      {
+        "type": "abstract",
+        "title": "Abstract",
+        "words": 187,
+        "depth": 0
+      },
+      {
+        "type": "methods",
+        "title": "Methods",
+        "words": 937,
+        "depth": 0
+      },
+      {
+        "type": "results",
+        "title": "Results",
+        "words": 937,
+        "depth": 0
+      },
+      {
+        "type": "discussion",
+        "title": "Discussion",
+        "words": 937,
+        "depth": 0
+      },
+      {
+        "type": "references",
+        "title": "References",
+        "words": 375,
+        "depth": 0
+      }
+    ]
+  }
+}

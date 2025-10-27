@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "type": "workshop",
+    "id": "notebook_flow",
+    "label": "Notebook-Centric",
+    "blurb": "Jupyter/Quarto notebooks as primary artifacts"
+  },
+  "payload": {
+    "dayBudgetMinutes": 360,
+    "step": 5,
+    "blockMaxMinutes": 420,
+    "readOnly": false,
+    "blocks": [
+      {
+        "kind": "theory",
+        "title": "Notebook Tour",
+        "minutes": 25
+      },
+      {
+        "kind": "lab",
+        "title": "Run & Annotate Cells",
+        "minutes": 60
+      },
+      {
+        "kind": "break",
+        "title": "Break",
+        "minutes": 10
+      },
+      {
+        "kind": "theory",
+        "title": "Data & Viz Primer",
+        "minutes": 40
+      },
+      {
+        "kind": "lab",
+        "title": "Notebook Exercise",
+        "minutes": 70
+      },
+      {
+        "kind": "lab",
+        "title": "Mini Project",
+        "minutes": 70
+      },
+      {
+        "kind": "theory",
+        "title": "Share & Export",
+        "minutes": 25
+      }
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+/* workshop_builder/ui/src/styles.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------------------------------------------------------------------------
+ * Design Tokens
+ * -------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --brand: 63 63 200;
+  --brand-hex: #4f46e5;          /* indigo-600 */
+  --brand-700: #4338ca;
+  --accent-hex: #10b981;         /* emerald-500 */
+
+  /* Surfaces & Text */
+  --surface: #ffffff;
+  --bg-muted: #eef2f7;           /* soft cool gray for page background */
+  --text: #0f172a;               /* slate-900 */
+  --text-muted: #6b7280;         /* gray-500 */
+
+  /* Effects */
+  --ring: 79 70 229;             /* indigo-600 */
+  --radius: 12px;
+}
+
+/* ----------------------------------------------------------------------------
+ * Base
+ * -------------------------------------------------------------------------- */
+@layer base {
+  html, body, #root { height: 100%; }
+  html { scroll-behavior: smooth; }
+
+  /* Keep default body light but neutral;
+     main page wrapper uses .app-bg for the modern pattern */
+  body {
+    @apply antialiased text-gray-900 bg-[color:var(--bg-muted)];
+  }
+
+  .h1 { @apply text-3xl md:text-4xl font-semibold tracking-tight; }
+  .h2 { @apply text-xl md:text-2xl font-semibold tracking-tight; }
+  .h3 { @apply text-lg font-semibold; }
+}
+
+/* ----------------------------------------------------------------------------
+ * App Background (high-contrast modern pattern)
+ * -------------------------------------------------------------------------- */
+@layer utilities {
+  /* Layered radial accents + subtle grid; ensures white text is NEVER on white */
+  .app-bg {
+    background-color: var(--bg-muted);
+    background-image:
+      radial-gradient(800px 400px at 100% -10%, rgba(79, 70, 229, 0.08), transparent 70%),
+      radial-gradient(900px 450px at -10% 0%, rgba(16, 185, 129, 0.08), transparent 65%),
+      linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    background-size:
+      auto,
+      auto,
+      24px 24px,
+      24px 24px;
+    background-position:
+      center,
+      center,
+      0 0,
+      0 0;
+  }
+
+  .hero-gradient {
+    background: linear-gradient(135deg, #0b1020 0%, #141a2e 50%, #1f2937 100%);
+  }
+
+  .animated-gradient {
+    background-size: 200% 200%;
+    animation: gradient-x 8s ease infinite;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Components
+ * -------------------------------------------------------------------------- */
+@layer components {
+  /* Cards stay readable on patterned bg */
+  .card {
+    @apply rounded-xl border bg-white/95 backdrop-blur p-4 shadow-sm;
+  }
+  .card-hover {
+    @apply transition hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  .input {
+    @apply w-full rounded-lg border px-3 py-2 text-sm outline-none
+           focus:ring-2 focus:ring-indigo-500 bg-white;
+  }
+  .select { @apply input appearance-none bg-white; }
+  .textarea { @apply input min-h-[7rem]; }
+  .label { @apply mb-1 block text-sm font-medium text-gray-700; }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2
+           text-sm font-semibold text-white shadow-sm transition
+           hover:bg-indigo-700 focus:outline-none disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2
+           text-sm font-semibold text-white shadow-sm transition
+           hover:bg-black/90 focus:outline-none disabled:opacity-50;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-lg border border-gray-300
+           bg-white px-4 py-2 text-sm font-semibold text-gray-800
+           hover:bg-gray-50 disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm
+           text-gray-700 hover:bg-gray-100;
+  }
+  .btn-success {
+    @apply inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2
+           text-sm font-semibold text-white hover:bg-emerald-700;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-lg bg-rose-600 px-4 py-2
+           text-sm font-semibold text-white hover:bg-rose-700;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5
+           text-xs font-medium text-gray-700;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium
+           text-gray-700 bg-white hover:bg-gray-50 transition cursor-pointer select-none;
+  }
+  .chip input[type="checkbox"],
+  .chip input[type="radio"] { @apply h-3 w-3 accent-indigo-600; }
+  .chip-active { @apply bg-indigo-50 border-indigo-200 text-indigo-700; }
+
+  .tab {
+    @apply rounded-lg px-3 py-2 text-sm transition border bg-white/95 text-gray-800 hover:bg-white;
+  }
+  .tab-active {
+    @apply bg-gray-900 text-white shadow-sm;
+  }
+
+  .progress { @apply h-2 w-full rounded-full bg-gray-200 overflow-hidden; }
+  .progress-bar { @apply h-2 rounded-full bg-gray-900 transition-[width] duration-300 ease-out; }
+
+  .glass {
+    @apply bg-white/70 backdrop-blur rounded-xl border border-white/60 shadow-sm;
+  }
+
+  .kpi { @apply rounded-lg border p-3; }
+  .kpi .label { @apply mb-0 text-xs text-gray-500; }
+  .kpi .value { @apply text-base font-semibold text-gray-800; }
+
+  .code { @apply rounded-lg border bg-gray-50 p-3 text-xs text-gray-800 overflow-auto; }
+
+  .divider { @apply my-4 h-px w-full bg-gray-200; }
+
+  .side-link { @apply block rounded-md px-3 py-2 text-sm transition-colors bg-white/95 text-gray-800 hover:bg-white border; }
+  .side-link-active { @apply bg-gray-900 text-white; }
+
+  .hero-cta {
+    @apply inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm transition;
+  }
+  .hero-cta-primary { @apply bg-white text-gray-900 hover:-translate-y-0.5 hover:shadow-md; }
+  .hero-cta-secondary { @apply border border-white/40 text-white/90 hover:bg-white/10; }
+}
+
+/* ----------------------------------------------------------------------------
+ * Animations
+ * -------------------------------------------------------------------------- */
+@keyframes gradient-x {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Skeleton loader */
+.skeleton { @apply relative overflow-hidden bg-gray-200 rounded; }
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

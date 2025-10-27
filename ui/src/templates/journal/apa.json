@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "type": "journal",
+    "id": "apa",
+    "label": "APA",
+    "blurb": "APA formatting (psych, social sci.)"
+  },
+  "payload": {
+    "maxWords": 8000,
+    "figureLimit": 4,
+    "readOnly": false,
+    "metadata": {
+      "title": "Article Title",
+      "doi": "",
+      "journal": "Journal of \u2026",
+      "keywords": [
+        "apa"
+      ]
+    },
+    "sections": [
+      {
+        "type": "abstract",
+        "title": "Abstract",
+        "words": 250,
+        "depth": 0
+      },
+      {
+        "type": "methods",
+        "title": "Methods",
+        "words": 2000,
+        "depth": 0
+      },
+      {
+        "type": "results",
+        "title": "Results",
+        "words": 2000,
+        "depth": 0
+      },
+      {
+        "type": "discussion",
+        "title": "Discussion",
+        "words": 2000,
+        "depth": 0
+      },
+      {
+        "type": "references",
+        "title": "References",
+        "words": 800,
+        "depth": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "type": "workshop",
+    "id": "slides_handoff",
+    "label": "Slides + Handouts",
+    "blurb": "Reveal.js slides + printable handouts"
+  },
+  "payload": {
+    "dayBudgetMinutes": 300,
+    "step": 5,
+    "blockMaxMinutes": 360,
+    "readOnly": false,
+    "blocks": [
+      {
+        "kind": "theory",
+        "title": "Slide Deck: Overview",
+        "minutes": 40
+      },
+      {
+        "kind": "theory",
+        "title": "Slide Deck: Concepts",
+        "minutes": 50
+      },
+      {
+        "kind": "break",
+        "title": "Pause",
+        "minutes": 10
+      },
+      {
+        "kind": "lab",
+        "title": "Guided Exercise",
+        "minutes": 60
+      },
+      {
+        "kind": "lab",
+        "title": "Solo Practice",
+        "minutes": 60
+      },
+      {
+        "kind": "theory",
+        "title": "Q&A + Wrap-up",
+        "minutes": 30
+      }
+    ]
+  }
+}

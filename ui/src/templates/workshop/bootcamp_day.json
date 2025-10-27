@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "type": "workshop",
+    "id": "bootcamp_day",
+    "label": "Full-Day Bootcamp",
+    "blurb": "Agenda-first, modules by time blocks"
+  },
+  "payload": {
+    "dayBudgetMinutes": 420,
+    "step": 5,
+    "blockMaxMinutes": 480,
+    "readOnly": false,
+    "blocks": [
+      {
+        "kind": "theory",
+        "title": "Orientation",
+        "minutes": 20
+      },
+      {
+        "kind": "lab",
+        "title": "Warm-up: Tooling",
+        "minutes": 45
+      },
+      {
+        "kind": "theory",
+        "title": "System Design",
+        "minutes": 50
+      },
+      {
+        "kind": "break",
+        "title": "Coffee",
+        "minutes": 10
+      },
+      {
+        "kind": "lab",
+        "title": "Core Lab I",
+        "minutes": 70
+      },
+      {
+        "kind": "break",
+        "title": "Lunch",
+        "minutes": 45
+      },
+      {
+        "kind": "lab",
+        "title": "Core Lab II",
+        "minutes": 70
+      },
+      {
+        "kind": "theory",
+        "title": "Patterns",
+        "minutes": 40
+      },
+      {
+        "kind": "lab",
+        "title": "Capstone Build",
+        "minutes": 70
+      }
+    ]
+  }
+}

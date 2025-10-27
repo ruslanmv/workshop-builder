@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "type": "proceedings",
+    "id": "acm_proc",
+    "label": "ACM Proceedings",
+    "blurb": "SIG proceedings with camera-ready"
+  },
+  "payload": {
+    "pageLimit": 8,
+    "readOnly": false,
+    "metadata": {
+      "conference": "ACM SIG \u2026",
+      "year": 2025,
+      "track": "Research"
+    },
+    "presentation": [
+      {
+        "type": "oral",
+        "title": "Talk",
+        "minutes": 12
+      },
+      {
+        "type": "lightning",
+        "title": "Lightning Talk",
+        "minutes": 5
+      }
+    ],
+    "paper": {
+      "sections": [
+        {
+          "type": "abstract",
+          "title": "Abstract",
+          "words": 200,
+          "depth": 0
+        },
+        {
+          "type": "methods",
+          "title": "Methods",
+          "words": 1500,
+          "depth": 0
+        },
+        {
+          "type": "results",
+          "title": "Results",
+          "words": 1500,
+          "depth": 0
+        },
+        {
+          "type": "discussion",
+          "title": "Discussion",
+          "words": 1000,
+          "depth": 0
+        }
+      ]
+    }
+  }
+}

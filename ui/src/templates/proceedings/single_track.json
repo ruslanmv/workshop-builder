@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "type": "proceedings",
+    "id": "single_track",
+    "label": "Single-Track",
+    "blurb": "Simple schedule & submission rules"
+  },
+  "payload": {
+    "pageLimit": 6,
+    "readOnly": false,
+    "metadata": {
+      "conference": "SingleTrackConf",
+      "year": 2025,
+      "track": "Main"
+    },
+    "presentation": [
+      {
+        "type": "oral",
+        "title": "Talks",
+        "minutes": 15
+      },
+      {
+        "type": "panel",
+        "title": "Panel Discussion",
+        "minutes": 45
+      }
+    ],
+    "paper": {
+      "sections": [
+        {
+          "type": "abstract",
+          "title": "Abstract",
+          "words": 180,
+          "depth": 0
+        },
+        {
+          "type": "results",
+          "title": "Main Content",
+          "words": 1800,
+          "depth": 0
+        },
+        {
+          "type": "references",
+          "title": "References",
+          "words": 300,
+          "depth": 0
+        }
+      ]
+    }
+  }
+}

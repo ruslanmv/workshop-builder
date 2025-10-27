@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "type": "mkdocs",
+    "id": "material",
+    "label": "Material for MkDocs",
+    "blurb": "Modern docs, great navigation & search"
+  },
+  "payload": {
+    "site_name": "Project Docs",
+    "theme": {
+      "name": "material"
+    },
+    "plugins": [
+      "search"
+    ],
+    "markdown_extensions": [
+      "admonition",
+      "toc",
+      "tables"
+    ],
+    "nav": [
+      {
+        "Home": "index.md"
+      },
+      {
+        "Getting Started": "getting-started.md"
+      },
+      {
+        "Guides": [
+          {
+            "Installation": "guides/install.md"
+          },
+          {
+            "Usage": "guides/usage.md"
+          }
+        ]
+      }
+    ],
+    "pages": [
+      {
+        "file": "index.md",
+        "title": "Welcome",
+        "front_matter": {
+          "estimated_time": 5
+        }
+      },
+      {
+        "file": "getting-started.md",
+        "title": "Getting Started",
+        "front_matter": {
+          "estimated_time": 10
+        }
+      }
+    ]
+  }
+}

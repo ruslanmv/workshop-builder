@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "acm_book",
+    "label": "ACM (Monograph)",
+    "blurb": "ACM layout variants for monographs"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 70000,
+    "step": 500,
+    "sectionMaxWords": 22000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "ACM Monograph: \u2026",
+      "author": "Author Surname",
+      "keywords": [
+        "acm",
+        "monograph"
+      ],
+      "layoutTemplate": "latex",
+      "descriptionHTML": "<p>ACM monograph template\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Introduction",
+        "words": 1500,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Foundations",
+        "words": 8000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Algorithms",
+        "words": 8000,
+        "depth": 0
+      },
+      {
+        "type": "case_study",
+        "title": "Case Studies",
+        "words": 5000,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Appendix",
+        "words": 1500,
+        "depth": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "springer",
+    "label": "Springer (Book)",
+    "blurb": "Springer XML/PDF workflows & citations"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 80000,
+    "step": 500,
+    "sectionMaxWords": 25000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "Your Springer Book",
+      "subtitle": "A Practical Guide",
+      "author": "Author Name",
+      "keywords": [
+        "springer",
+        "example"
+      ],
+      "layoutTemplate": "latex",
+      "descriptionHTML": "<p>About this book\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Preface",
+        "words": 1500,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 1 \u2014 Basics",
+        "words": 8000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Background",
+        "words": 3000,
+        "depth": 1
+      },
+      {
+        "type": "case_study",
+        "title": "Case Study \u2014 Acme",
+        "words": 4500,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Appendix A \u2014 Data",
+        "words": 2000,
+        "depth": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "type": "proceedings",
+    "id": "poster_only",
+    "label": "Poster-Only",
+    "blurb": "Poster session abstracts"
+  },
+  "payload": {
+    "pageLimit": 2,
+    "readOnly": false,
+    "metadata": {
+      "conference": "PosterConf",
+      "year": 2025,
+      "track": "Poster"
+    },
+    "presentation": [
+      {
+        "type": "poster",
+        "title": "Poster Session",
+        "minutes": 120
+      }
+    ],
+    "paper": {
+      "sections": [
+        {
+          "type": "abstract",
+          "title": "Extended Abstract",
+          "words": 250,
+          "depth": 0
+        }
+      ]
+    }
+  }
+}

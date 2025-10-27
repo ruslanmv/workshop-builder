@@ -1,0 +1,10 @@
+.venv
+.git
+.gitignore
+__pycache__
+*.pyc
+ui/node_modules
+dist
+build
+.pytest_cache
+.ruff_cache

@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "type": "mkdocs",
+    "id": "sphinx",
+    "label": "Sphinx-Style",
+    "blurb": "Classic doc layout & API references"
+  },
+  "payload": {
+    "site_name": "Project Docs (Sphinx-Style)",
+    "theme": {
+      "name": "readthedocs"
+    },
+    "plugins": [
+      "search",
+      "mkdocstrings"
+    ],
+    "markdown_extensions": [
+      "admonition",
+      "def_list",
+      "pymdownx.highlight"
+    ],
+    "nav": [
+      {
+        "Overview": "index.md"
+      },
+      {
+        "API": [
+          {
+            "Client": "api/client.md"
+          },
+          {
+            "Server": "api/server.md"
+          }
+        ]
+      }
+    ],
+    "pages": [
+      {
+        "file": "index.md",
+        "title": "Overview",
+        "front_matter": {
+          "estimated_time": 6
+        }
+      }
+    ]
+  }
+}

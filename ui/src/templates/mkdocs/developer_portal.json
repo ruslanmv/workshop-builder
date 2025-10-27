@@ -1,0 +1,71 @@
+{
+  "meta": {
+    "type": "mkdocs",
+    "id": "developer_portal",
+    "label": "Developer Portal",
+    "blurb": "Guides + API + Changelogs + Versioning"
+  },
+  "payload": {
+    "site_name": "Developer Portal",
+    "theme": {
+      "name": "material"
+    },
+    "plugins": [
+      "search",
+      "mkdocstrings",
+      "tags"
+    ],
+    "extra": {
+      "social": [
+        {
+          "icon": "github",
+          "link": "https://github.com/example"
+        }
+      ]
+    },
+    "nav": [
+      {
+        "Home": "index.md"
+      },
+      {
+        "Guides": [
+          {
+            "Quickstart": "guides/quickstart.md"
+          },
+          {
+            "Auth": "guides/auth.md"
+          }
+        ]
+      },
+      {
+        "API": [
+          {
+            "REST": "api/rest.md"
+          },
+          {
+            "SDK": "api/sdk.md"
+          }
+        ]
+      },
+      {
+        "Changelog": "changelog.md"
+      }
+    ],
+    "pages": [
+      {
+        "file": "index.md",
+        "title": "Welcome",
+        "front_matter": {
+          "estimated_time": 4
+        }
+      },
+      {
+        "file": "changelog.md",
+        "title": "Changelog",
+        "front_matter": {
+          "estimated_time": 2
+        }
+      }
+    ]
+  }
+}

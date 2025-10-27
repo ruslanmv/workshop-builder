@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "type": "blog",
+    "id": "magazine",
+    "label": "Magazine",
+    "blurb": "Hero art, pull quotes, editorial vibe"
+  },
+  "payload": {
+    "metadata": {
+      "title": "Feature Story",
+      "slug": "feature-story",
+      "tags": [
+        "feature",
+        "design"
+      ],
+      "author": "Author",
+      "date": "2025-01-01"
+    },
+    "constraints": {
+      "maxImageKB": 2048,
+      "minWords": 1200
+    },
+    "blocks": [
+      {
+        "type": "image",
+        "src": "/img/hero.jpg",
+        "alt": "Hero",
+        "caption": "Cover image"
+      },
+      {
+        "type": "text",
+        "md": "> \u201cA great quote to pull readers in.\u201d"
+      },
+      {
+        "type": "text",
+        "md": "Long-form narrative\u2026"
+      }
+    ]
+  }
+}

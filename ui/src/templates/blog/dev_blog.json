@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "type": "blog",
+    "id": "dev_blog",
+    "label": "Developer Blog",
+    "blurb": "Code-first, syntax highlighting, dark mode"
+  },
+  "payload": {
+    "metadata": {
+      "title": "My Dev Post",
+      "slug": "my-dev-post",
+      "tags": [
+        "dev",
+        "tutorial"
+      ],
+      "author": "Author",
+      "date": "2025-01-01"
+    },
+    "constraints": {
+      "maxImageKB": 1024,
+      "minWords": 800
+    },
+    "blocks": [
+      {
+        "type": "text",
+        "md": "## Intro\\nWhy this matters\u2026"
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "code": "print('hello world')"
+      },
+      {
+        "type": "callout",
+        "kind": "tip",
+        "md": "Remember to pin your deps."
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "type": "mkdocs",
+    "id": "handbook",
+    "label": "Engineering Handbook",
+    "blurb": "Long-form sections with deep hierarchy"
+  },
+  "payload": {
+    "site_name": "Engineering Handbook",
+    "theme": {
+      "name": "material"
+    },
+    "plugins": [
+      "search"
+    ],
+    "nav": [
+      {
+        "Home": "index.md"
+      },
+      {
+        "Culture": [
+          {
+            "Values": "culture/values.md"
+          },
+          {
+            "Communication": "culture/communication.md"
+          }
+        ]
+      },
+      {
+        "Practices": [
+          {
+            "Code Review": "practices/code-review.md"
+          },
+          {
+            "Incident Response": "practices/incident.md"
+          }
+        ]
+      }
+    ],
+    "pages": [
+      {
+        "file": "index.md",
+        "title": "Welcome",
+        "front_matter": {
+          "estimated_time": 5
+        }
+      }
+    ]
+  }
+}

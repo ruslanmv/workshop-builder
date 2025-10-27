@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "generic_latex",
+    "label": "Generic LaTeX",
+    "blurb": "Publisher-agnostic LaTeX baseline"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 60000,
+    "step": 500,
+    "sectionMaxWords": 20000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "Generic LaTeX Book",
+      "author": "Author Name",
+      "keywords": [
+        "latex",
+        "generic"
+      ],
+      "layoutTemplate": "latex",
+      "descriptionHTML": "<p>Baseline LaTeX structure\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Foreword",
+        "words": 1200,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 1",
+        "words": 7000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 2",
+        "words": 7000,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Appendix",
+        "words": 1500,
+        "depth": 0
+      }
+    ]
+  }
+}

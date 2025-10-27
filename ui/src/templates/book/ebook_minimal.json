@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "ebook_minimal",
+    "label": "Ebook \u2014 Minimal",
+    "blurb": "Lightweight reflowable text, few images"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 30000,
+    "step": 500,
+    "sectionMaxWords": 12000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "Minimal Ebook",
+      "author": "Author",
+      "keywords": [
+        "minimal",
+        "ebook"
+      ],
+      "layoutTemplate": "word",
+      "descriptionHTML": "<p>Minimalist ebook preset\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Preface",
+        "words": 800,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 1",
+        "words": 4800,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 2",
+        "words": 4800,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Resources",
+        "words": 1000,
+        "depth": 0
+      }
+    ]
+  }
+}

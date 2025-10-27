@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "ebook_kindle_kdp",
+    "label": "Ebook \u2014 Kindle KDP",
+    "blurb": "Reflowable EPUB/KF; cover & metadata for Amazon"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 45000,
+    "step": 500,
+    "sectionMaxWords": 15000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "Kindle Edition",
+      "subtitle": "Reflowable",
+      "author": "Author",
+      "keywords": [
+        "kindle",
+        "ebook"
+      ],
+      "layoutTemplate": "word",
+      "descriptionHTML": "<p>Store description for Amazon\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "About this Ebook",
+        "words": 1200,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 1",
+        "words": 6000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 2",
+        "words": 6000,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Resources",
+        "words": 1200,
+        "depth": 0
+      }
+    ]
+  }
+}

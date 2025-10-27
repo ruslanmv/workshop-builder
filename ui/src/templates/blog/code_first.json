@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "type": "blog",
+    "id": "code_first",
+    "label": "Code Tutorial",
+    "blurb": "Step-by-step with callouts & tips"
+  },
+  "payload": {
+    "metadata": {
+      "title": "How to Build X",
+      "slug": "how-to-build-x",
+      "tags": [
+        "guide",
+        "howto"
+      ],
+      "author": "Author",
+      "date": "2025-01-01"
+    },
+    "constraints": {
+      "maxImageKB": 1024,
+      "minWords": 900
+    },
+    "blocks": [
+      {
+        "type": "text",
+        "md": "### Step 1\\nDo this\u2026"
+      },
+      {
+        "type": "code",
+        "language": "bash",
+        "code": "npm create foo"
+      },
+      {
+        "type": "callout",
+        "kind": "warning",
+        "md": "Watch out for version mismatches."
+      }
+    ]
+  }
+}

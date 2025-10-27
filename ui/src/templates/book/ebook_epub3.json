@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "ebook_epub3",
+    "label": "Ebook \u2014 Generic EPUB3",
+    "blurb": "Portable, reflowable EPUB3 baseline"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 40000,
+    "step": 500,
+    "sectionMaxWords": 14000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "EPUB3 Edition",
+      "author": "Author",
+      "keywords": [
+        "epub3",
+        "ebook"
+      ],
+      "layoutTemplate": "word",
+      "descriptionHTML": "<p>Generic EPUB3 settings\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Introduction",
+        "words": 1000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 1",
+        "words": 5200,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Chapter 2",
+        "words": 5200,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Appendix",
+        "words": 1200,
+        "depth": 0
+      }
+    ]
+  }
+}

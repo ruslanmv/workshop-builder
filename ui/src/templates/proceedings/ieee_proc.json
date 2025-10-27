@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "type": "proceedings",
+    "id": "ieee_proc",
+    "label": "IEEE Proceedings",
+    "blurb": "Two-column, strict page limits"
+  },
+  "payload": {
+    "pageLimit": 6,
+    "readOnly": false,
+    "metadata": {
+      "conference": "IEEE Conf. on \u2026",
+      "year": 2025,
+      "track": "Main"
+    },
+    "presentation": [
+      {
+        "type": "oral",
+        "title": "Oral Presentation",
+        "minutes": 15
+      },
+      {
+        "type": "poster",
+        "title": "Poster Session",
+        "minutes": 90
+      }
+    ],
+    "paper": {
+      "sections": [
+        {
+          "type": "abstract",
+          "title": "Abstract",
+          "words": 200,
+          "depth": 0
+        },
+        {
+          "type": "methods",
+          "title": "Methods",
+          "words": 1200,
+          "depth": 0
+        },
+        {
+          "type": "results",
+          "title": "Results",
+          "words": 1200,
+          "depth": 0
+        },
+        {
+          "type": "discussion",
+          "title": "Discussion",
+          "words": 800,
+          "depth": 0
+        }
+      ]
+    }
+  }
+}

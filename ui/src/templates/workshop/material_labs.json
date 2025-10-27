@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "type": "workshop",
+    "id": "material_labs",
+    "label": "Material + Labs",
+    "blurb": "MkDocs Material with Lab/Theory admonitions"
+  },
+  "payload": {
+    "dayBudgetMinutes": 360,
+    "step": 5,
+    "blockMaxMinutes": 480,
+    "readOnly": false,
+    "blocks": [
+      {
+        "kind": "theory",
+        "title": "Introductions & Goals",
+        "minutes": 30
+      },
+      {
+        "kind": "lab",
+        "title": "Environment Setup",
+        "minutes": 60
+      },
+      {
+        "kind": "break",
+        "title": "Coffee Break",
+        "minutes": 10
+      },
+      {
+        "kind": "theory",
+        "title": "Core Concepts",
+        "minutes": 45
+      },
+      {
+        "kind": "lab",
+        "title": "Hands-on: First Pipeline",
+        "minutes": 75
+      },
+      {
+        "kind": "break",
+        "title": "Lunch",
+        "minutes": 45
+      },
+      {
+        "kind": "theory",
+        "title": "Patterns & Anti-patterns",
+        "minutes": 40
+      },
+      {
+        "kind": "lab",
+        "title": "Capstone Exercise",
+        "minutes": 55
+      }
+    ]
+  }
+}

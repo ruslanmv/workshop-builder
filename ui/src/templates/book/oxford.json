@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "type": "book",
+    "id": "oxford",
+    "label": "Oxford (Book)",
+    "blurb": "Oxford house style & references"
+  },
+  "payload": {
+    "manuscriptBudgetWords": 90000,
+    "step": 500,
+    "sectionMaxWords": 30000,
+    "readOnly": false,
+    "metadata": {
+      "bookTitle": "Oxford Handbook of \u2026",
+      "author": "Primary Author",
+      "keywords": [
+        "oxford",
+        "style"
+      ],
+      "layoutTemplate": "latex",
+      "descriptionHTML": "<p>Oxford style overview\u2026</p>"
+    },
+    "toc": [
+      {
+        "type": "introduction",
+        "title": "Introduction",
+        "words": 2000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Theory",
+        "words": 9000,
+        "depth": 0
+      },
+      {
+        "type": "technical",
+        "title": "Methods",
+        "words": 9000,
+        "depth": 0
+      },
+      {
+        "type": "case_study",
+        "title": "Applications",
+        "words": 6000,
+        "depth": 0
+      },
+      {
+        "type": "appendix",
+        "title": "Appendix",
+        "words": 2000,
+        "depth": 0
+      }
+    ]
+  }
+}

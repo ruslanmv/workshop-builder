@@ -1,147 +1,134 @@
 <div align="center">
   <a href="https://www.python.org" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="Python" width="60" height="60"/></a>
   <a href="https://www.docker.com/" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/docker/docker-original-wordmark.svg" alt="Docker" width="60" height="60"/></a>
-  <a href="https://vitejs.dev" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/vitejs/vitejs-original.svg" alt="Vite" width="60" height="60"/></a>
+  <a href="https://jupyter.org/" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/jupyter/jupyter-original-wordmark.svg" alt="Jupyter" width="60" height="60"/></a>
 </div>
 
-# Workshop Builder — Universal A2A + /knowledge + Flask UI (Big Docs Ready)
+# Workshop Builder – Production-Ready FastAPI + watsonx.ai + RAG (Chroma) + CrewAI
 
-A production-ready toolkit that turns a GitHub repo or local docs into a **book + MkDocs website + workshop plan**, and exposes a **persistent RAG** index via **Universal A2A** `/knowledge`. Optional **CrewAI**-driven planning and **watsonx.ai / OpenAI** providers.
+<p align="center">
+  <img alt="Python Version" src="https://img.shields.io/badge/python-3.11-blue.svg">
+  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg">
+  <img alt="Docker" src="https://img.shields.io/badge/docker-ready-blue.svg?logo=docker">
+</p>
 
-> 🔐 Provide API credentials for your chosen LLM/embeddings if you enable retrieval.
-
----
-
-## ✨ Features
-
-- **Universal A2A `/knowledge`** — persistent vector index; ingest files/dirs/repos; query by collection.
-- **Big-doc chunking** — defaults `1400/160` for large Markdown/codebases.
-- **Chroma or Qdrant** — local on-disk by default, HA-ready with Qdrant.
-- **watsonx.ai or OpenAI** — env-driven provider selection for chat/embeddings.
-- **Flask UI + React (Vite)** — ingest, plan, design workshop schedules, and export book artifacts.
-- **CrewAI (optional)** — researcher/writer agents to bootstrap outlines.
-
----
-
-## 📁 Layout
-workshop_builder/
-
-├─ ui/                        # React + Vite + Tailwind
-
-│  └─ dist/                   # built UI (vite build)
-
-├─ src/                       # Python backend (Flask API)
-
-│  ├─ app.py                  # Flask app factory (serves /api/*)
-
-│  ├─ config.py               # Pydantic settings
-
-│  ├─ models/                 # Pydantic models (Repo/Book/Workshop/Provider)
-
-│  ├─ routes/                 # /api endpoints (health/ingest/workshops/books/exports)
-
-│  ├─ services/               # repo/rag/providers/planning/schedule/export
-
-│  ├─ templates/springer/     # LaTeX templates (Springer-like)
-
-│  └─ utils/                  # fs/time helpers
-
-├─ a2a_server.py              # Universal A2A FastAPI server (optional process)
-
-├─ scripts/
-
-│  └─ build_ui.sh             # npm ci && npm run build
-
-├─ pyproject.toml
-
-├─ Makefile
-
-├─ .env.example
-
-└─ README.md
+A **multi-tenant**, **authenticated** backend that offers:
+- FastAPI API with **SSE streaming** (progress/logs/artifacts).
+- **IBM watsonx.ai** for chat + embeddings (Granite models).
+- **RAG** with Chroma, token-aware chunking, batched embeddings.
+- **Redis + RQ** durable job queue (worker process).
+- **Structured logs**, **Prometheus metrics**, health probes.
+- **JWT/API-Key** auth & **tenant-isolated** collections.
 
 ---
 
-## 🧩 Prerequisites
+## What You Get
 
-- **Python 3.11**
-- **Node 18+** (to build the UI)
-- **Git**
-- **Docker + compose** (optional)
-- **uv** (package manager; installed automatically by `make check-uv`)
+- Modern packaging in `pyproject.toml`.
+- Cross-platform **Makefile** with **uv** as the default installer.
+- **Dockerfile** and **docker-compose** for a one-command stack.
+- Ready endpoints and a worker for long-running generation jobs.
 
 ---
 
-## ⚙️ Configure
+## Prerequisites
 
-Copy and edit:
+- Python **3.11** and **uv** (for local installs), or
+- Docker (Desktop or Engine) for containerized runs.
+- Redis (auto via Docker Compose).
+
+---
+
+## 🐳 Docker Quick Start (Recommended)
 
 ```bash
 cp .env.example .env
+# Fill: WATSONX_API_KEY, WATSONX_PROJECT_ID
+
+docker compose -f infra/docker-compose.yml up --build
+# API  -> http://localhost:5000
+# Auth -> use header: X-API-Key: dev-key-123  (change in .env for prod)
 ```
 
-Key values to review: `A2A_BASE`, `A2A_ENABLE_KNOWLEDGE`, vector DB selection, and provider credentials for watsonx/OpenAI.
+> SSE endpoint: `GET /api/generate/stream?job_id=...`
 
-## 🚀 Build & Run
-1) Install backend deps
+---
+
+## 🐍 Local Quick Start (uv)
+
 ```bash
-make install          # creates .venv and syncs deps with uv
-```
-2) Build the UI
-```bash
-make ui-build         # runs scripts/build_ui.sh
-```
-Vite outputs to `ui/dist/`. Serve via Flask or your edge (NGINX).
-3) Start services
-Run both A2A + Flask from one terminal:
-```bash
-make serve-all
-# A2A → http://localhost:8000
-# UI  → http://localhost:5000
-```
-Or run separately:
-```bash
-make serve-a2a
-make serve-web
-```
-Docker Compose option:
-```bash
-make compose-up
+make check-uv          # installs uv if needed
+make install           # uv sync
+cp .env.example .env   # and fill watsonx creds
+uv run uvicorn server.main:app --host 0.0.0.0 --port 5000
+# In another terminal:
+uv run python -m workers.worker
 ```
 
-## 📚 RAG: Ingest & Query
-Ingest a path:
+Install dev tools:
 ```bash
-make ingest TARGET=/absolute/path/to/repo
-```
-Query:
-```bash
-curl -s http://localhost:8000/knowledge/query \
-  -H "content-type: application/json" \
-  -d '{"q":"List primary endpoints", "k":6, "score_threshold":0.0}' | jq
+uv sync --group dev  # ruff, pytest
 ```
 
-## 🧰 Workshop & Book
-Open the UI: http://localhost:5000
+---
 
-- **Repo ingest** → DocMap
-- **Plan preview** → chapters/labs
-- **Workshop designer** → schedule blocks (theory/lab/break), module objectives
-- **Book designer** → title/authors/sections; preview Markdown/LaTeX
-- **Export panel** → EPUB/PDF/Springer (requires local pandoc/xelatex)
+## Authentication & Tenancy
 
-## 🧪 QA
-```bash
-make test   # pytest
-make lint   # ruff check
-make fmt    # ruff format
-```
+- **API Key**: send header `X-API-Key: <your-key>`. Configure `API_KEYS` in `.env`.
+- **JWT**: supply `Authorization: Bearer <token>`; set `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_JWKS_URL` (or `JWT_SECRET` for HS256).
+- **Tenant**: pass `X-Tenant-Id: <tenant>`; all vector collections are stored as `<tenant>:<collection>`.
 
-## 🏭 Production Notes
-- Keep `/knowledge` behind your gateway; use `A2A_STRICT_INGEST_ROOT=1`.
-- Prefer Qdrant for multi-node HA; Chroma for local dev.
-- Inject secrets via your platform’s secret store (don’t commit `.env`).
-- Reverse proxy UI + A2A with TLS, auth, and caching headers for static assets.
+---
 
-## 📄 License
-Apache-2.0 — see `LICENSE`.
+## Endpoints (high level)
+
+- `GET  /api/healthz` , `GET /api/readyz`
+- `GET  /api/providers`
+- `GET  /api/settings`
+- `POST /api/ingest/files` (multipart: `files[]`, `collection?`)
+- `POST /api/knowledge/query` (`{ q, collection?, k? }`)
+- `POST /api/generate/start` -> returns `{ job_id, stream }`
+- `GET  /api/generate/stream?job_id=...` (SSE)
+- `GET  /api/exports/{job_id}` / `GET /api/exports/{job_id}/{file}`
+
+All authenticated by default.
+
+---
+
+## RAG Details
+
+- Splitter: `RecursiveCharacterTextSplitter` with `chunk_size=1200`, `overlap=160`.
+- Embeddings: Watsonx **Granite Embedding 278m Multilingual** (configurable).
+- Similarity: cosine distance provided by Chroma; output also includes similarity `= 1 - distance`.
+
+---
+
+## Observability
+
+- JSON logs via `structlog`.
+- Prometheus: `/metrics` when `ENABLE_PROMETHEUS=true`.
+- Add OTEL exporter by setting `ENABLE_OTEL=true` and `OTEL_EXPORTER_OTLP_ENDPOINT`.
+
+---
+
+## Deployment
+
+- Gunicorn + Uvicorn workers (see `infra/Dockerfile` & `infra/gunicorn_conf.py`).
+- Add NGINX/reverse proxy and TLS in front; or use Kubernetes ingress.
+- Serve static UI (if any) via CDN, not from the API.
+
+---
+
+## Makefile Highlights
+
+- `make install` / `make uv-install` – install with **uv**.
+- `make test` / `make lint` / `make fmt` – QA helpers (install dev deps with `uv sync --group dev`).
+- Docker helpers: `make build-container`, `make run-container`, `make logs`, `make stop-container`.
+
+> Note: Docker helpers in the Makefile are generic; prefer `docker compose -f infra/docker-compose.yml up` for the full stack.
+
+---
+
+## License
+
+Licensed under the **Apache-2.0** license.

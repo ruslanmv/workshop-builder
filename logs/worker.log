@@ -1,0 +1,9 @@
+⏳ Waiting for Redis at redis://localhost:6379/0 ...
+⚠️  Worker name 'local-worker' already exists. Using 'local-worker-WIN-D52PPDAKV0F-159588-887'.
+🔗 Starting RQ worker name=local-worker-WIN-D52PPDAKV0F-159588-887, queues=jobs, url=redis://localhost:6379/0
+   Worker class: rq.worker.Worker
+00:18:01 Worker local-worker-WIN-D52PPDAKV0F-159588-887: started with PID 159588, version 2.6.0
+00:18:01 Worker local-worker-WIN-D52PPDAKV0F-159588-887: subscribing to channel rq:pubsub:local-worker-WIN-D52PPDAKV0F-159588-887
+00:18:01 *** Listening on jobs...
+00:18:01 Worker local-worker-WIN-D52PPDAKV0F-159588-887: cleaning registries for queue: jobs
+00:20:10 jobs: generate workshop for tenant=public (351ea3b9-bea4-4ad9-b3c0-c3e3edb65267)

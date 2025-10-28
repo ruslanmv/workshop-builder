@@ -35,8 +35,8 @@ dependencies = [
   "crewai>=0.56.0",
 
   # jobs / redis
-  "redis>=5.0.8",
-  "rq>=1.16.2",
+  "redis>=7.0.1",
+  "rq>=2.6.0",
 
   # security / rate limit
   "slowapi>=0.1.9",

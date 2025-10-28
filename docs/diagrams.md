@@ -5,19 +5,24 @@
 <!-- end list -->
 
 ```mermaid
+%% Force HTML labels so <br/> works
+%% (Remove this init block if your environment already enables htmlLabels)
+%%{init: {"flowchart": {"htmlLabels": true}} }%%
 flowchart LR
     U[User<br/>Browser] -->|HTTP 80| NX[Nginx<br/>serves UI & proxies /api/* & SSE]
     NX -->|/api/*| API[FastAPI Backend<br/>server.main]
-    NX -->|/ UI| UI[Vite/React Build<br/>/usr/share/nginx/html]
+    NX -->|/ui| UI[Vite/React Build<br/>/usr/share/nginx/html]
 
     subgraph SVC[Backend Services]
       API -->|enqueue job| RQ[Redis RQ<br/>queue: jobs]
       RQ --> WK[RQ Worker<br/>workers.worker]
       WK --> FL[⚙️ CrewAI Flow<br/>WorkshopBuildFlow]
-      API -->|Pub/Sub| RS[Redis Pub/Sub<br/>job:{id}:events]
+      API -->|Pub/Sub| RS[Redis Pubjob]
       NX -->|/api/generate/stream| API
-      API -->|SSE| BR[Browser EventSource]
     end
+
+    %% Client-side SSE consumer lives outside backend services
+    API -->|SSE| BR[Browser EventSource]
 
     subgraph RAG[RAG Stack]
       SP[Token-aware Splitter] --> EMB[watsonx.ai Embeddings]
@@ -29,12 +34,13 @@ flowchart LR
     subgraph GEN[Generation & Exports]
       FL --> WR[Writer/Formatter Agents]
       WR --> EXP[Exporters<br/>PDF • EPUB • MkDocs]
-      EXP --> FS[Artifacts on Disk<br/>/data/jobs/{id}/artifacts]
-      API -->|/api/exports/{id}| FS
+      EXP --> FS[Artifacts on Diskartifacts]
+      API -->|/api/exportsid| FS
     end
 
     classDef node fill:#f6f9ff,stroke:#557;
     class U,NX,API,UI,RQ,WK,FL,RS,SP,EMB,CH,WR,EXP,FS,BR node;
+
 ```
 
 2)  Sequence — Ingest & Generate (API + Worker + SSE)
@@ -144,8 +150,8 @@ flowchart TB
     PLAN --> WRITE[Writer/Formatter CrewAI]
     WRITE --> MS[Manuscript.md]
     MS --> EXP[Exporters<br/>PDF • EPUB • MkDocs]
-    EXP --> ART[Artifacts on Disk<br/>/data/jobs/{id}/artifacts]
-    ART --> DL[Downloads via /api/exports/{id}]
+    EXP --> ART[Artifacts on Disk artifacts]
+    ART --> DL[Downloads via exports]
 ```
 
 6)  Config & control plane
@@ -155,7 +161,7 @@ flowchart TB
 ```mermaid
 flowchart LR
     ENV[.env / env vars] --> CFG[Pydantic Settings]
-    CFG --> LLM[LLM Builder<br/>CREW_PROVIDER=watsonx|openai|ollama]
+    CFG --> LLM[LLM Builde]
     CFG --> API[FastAPI App]
     LLM --> Flow[WorkshopBuildFlow CrewAI]
     API --> Q[Redis Queue RQ]

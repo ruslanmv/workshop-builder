@@ -1,134 +1,275 @@
+
 <div align="center">
-  <a href="https://www.python.org" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="Python" width="60" height="60"/></a>
-  <a href="https://www.docker.com/" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/docker/docker-original-wordmark.svg" alt="Docker" width="60" height="60"/></a>
-  <a href="https://jupyter.org/" target="_blank"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/jupyter/jupyter-original-wordmark.svg" alt="Jupyter" width="60" height="60"/></a>
+  <h1>🧠 Workshop Builder</h1>
+  <p><b>FastAPI + watsonx.ai + RAG (Chroma) + CrewAI</b><br/>Agentic document generation — workshops, books, guides.</p>
+  <p>
+    <img alt="Python Version" src="https://img.shields.io/badge/python-3.11+-blue.svg">
+    <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg">
+    <img alt="Status" src="https://img.shields.io/badge/stack-FastAPI%20%7C%20CrewAI%20%7C%20Chroma%20%7C%20watsonx.ai-brightgreen">
+  </p>
 </div>
 
-# Workshop Builder – Production-Ready FastAPI + watsonx.ai + RAG (Chroma) + CrewAI
+---
 
-<p align="center">
-  <img alt="Python Version" src="https://img.shields.io/badge/python-3.11-blue.svg">
-  <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg">
-  <img alt="Docker" src="https://img.shields.io/badge/docker-ready-blue.svg?logo=docker">
-</p>
+## ✨ What it does
 
-A **multi-tenant**, **authenticated** backend that offers:
-- FastAPI API with **SSE streaming** (progress/logs/artifacts).
-- **IBM watsonx.ai** for chat + embeddings (Granite models).
-- **RAG** with Chroma, token-aware chunking, batched embeddings.
-- **Redis + RQ** durable job queue (worker process).
-- **Structured logs**, **Prometheus metrics**, health probes.
-- **JWT/API-Key** auth & **tenant-isolated** collections.
+**Workshop Builder** turns raw materials (Markdown, docs, repos, web pages) into polished **workshops** and **long-form documents** using:
+
+- **Agentic pipeline (CrewAI)** — planner → researcher → writer → formatter → exporter
+- **watsonx.ai** — Granite models for chat + multilingual embeddings
+- **RAG** — token-aware chunking, retrieval via **Chroma** for grounded generation
+- **FastAPI** backend with **SSE** streaming of live progress/logs/artifacts
+- **Multi-tenant & authenticated** API (API key or JWT)
+
+Outputs: `PDF`, `EPUB`, `MkDocs` (site), and zipped artifact bundles.
 
 ---
 
-## What You Get
 
-- Modern packaging in `pyproject.toml`.
-- Cross-platform **Makefile** with **uv** as the default installer.
-- **Dockerfile** and **docker-compose** for a one-command stack.
-- Ready endpoints and a worker for long-running generation jobs.
+**Generation flow**
+
+1. **Ingest**: Text is split (token-aware) and embedded with **watsonx.ai**.
+2. **Index**: Chunks + metadata are stored in **Chroma**.
+3. **Plan**: CrewAI **Planner** drafts structure (sections, schedule).
+4. **Research**: **Researcher** queries RAG for highly relevant context.
+5. **Write**: **Writer** composes content grounded in retrieved chunks.
+6. **Format**: **Formatter** prepares layout-ready Markdown/LaTeX.
+7. **Export**: Build **PDF/EPUB/MkDocs**; artifacts are surfaced over SSE.
+
+During generation the backend emits SSE events:
+- `progress` (e.g., “Writing section 3/8”), 
+- `log` (info/debug),
+- `artifact` (downloadable files ready),
+- `done` (job completed).
 
 ---
 
-## Prerequisites
+## 🚀 Quick start
 
-- Python **3.11** and **uv** (for local installs), or
-- Docker (Desktop or Engine) for containerized runs.
-- Redis (auto via Docker Compose).
-
----
-
-## 🐳 Docker Quick Start (Recommended)
+### 1) Install (local)
 
 ```bash
+# Python 3.11+ recommended
+make check-uv
+make install
 cp .env.example .env
-# Fill: WATSONX_API_KEY, WATSONX_PROJECT_ID
+# Fill watsonx.ai credentials in .env:
+#   WATSONX_API_KEY=...
+#   WATSONX_PROJECT_ID=...
+#   WATSONX_REGION=us-south
+````
 
+### 2) Run backend + frontend together
+
+```bash
+make run
+# Backend: http://localhost:5000
+# Frontend: http://localhost:5173
+```
+
+> If you only want the API: `uv run uvicorn server.main:app --host 0.0.0.0 --port 5000 --reload`
+
+### 3) Minimal E2E smoke test
+
+```bash
+# Uses sensible defaults: X-API-Key=dev-key-123, tenant=public
+python examples/test_workshop.py --download
+```
+
+---
+
+## 🔐 Auth & tenancy (simple by default)
+
+* **API key**: send header `X-API-Key: dev-key-123` (change in `.env` → `API_KEYS`)
+* **Tenant**: send header `X-Tenant-Id: public` (default)
+* **JWT** (optional): `Authorization: Bearer <token>` with `JWT_SECRET` or JWKS config
+
+The example and UI **default** to:
+
+```http
+X-API-Key: dev-key-123
+X-Tenant-Id: public
+```
+
+---
+
+## ⚙️ Config highlights
+
+`.env` (or environment variables):
+
+```
+# App
+APP_NAME="Workshop Builder API"
+LOG_LEVEL=INFO
+ENV=dev
+
+# Static UI build
+STATIC_ROOT=./ui/dist
+
+# Auth
+API_KEYS=dev-key-123
+TENANCY_HEADER=X-Tenant-Id
+DEFAULT_TENANT=public
+
+# Storage
+DATA_DIR=./data
+JOBS_DIR=./data/jobs
+CHROMA_DIR=./data/chroma
+
+# watsonx.ai
+WATSONX_API_KEY=...
+WATSONX_PROJECT_ID=...
+WATSONX_REGION=us-south
+WATSONX_CHAT_MODEL=ibm/granite-13b-instruct-v2
+WATSONX_EMBED_MODEL=ibm/granite-embedding-278m-multilingual
+```
+
+> The backend **auto-guards** against embedding length issues (512 tokens) by chunking sensibly; if a model complains, it shrinks chunk size and retries.
+
+---
+
+## 🧠 RAG details
+
+* **Splitter**: `RecursiveCharacterTextSplitter`
+  `chunk_size=1200`, `chunk_overlap=160` (tunable per your corpus)
+* **Embeddings**: watsonx.ai Granite multilingual embedding model
+* **Similarity**: cosine (`similarity = 1 - distance`)
+* **Metadata**: source path + optional title carried through, useful for previews
+
+---
+
+## 🤖 The agents (CrewAI)
+
+> You can customize or extend the crew in `workers/` (planner/researcher/writer/formatter).
+
+* **Planner**: Transforms intent + source summary → coherent outline.
+* **Researcher**: Routes queries to RAG, curates evidence per section.
+* **Writer**: Produces didactic, grounded prose/code labs from research.
+* **Formatter**: Normalizes structure, fixes headings, adds front-matter.
+* **Exporter**: Builds final **PDF/EPUB/MkDocs** and emits `artifact` events.
+
+Each step publishes **SSE progress** so the UI feels live.
+
+---
+
+## 🧩 API overview
+
+| Method | Endpoint                          | What it does                               |
+| -----: | --------------------------------- | ------------------------------------------ |
+|    GET | `/api/healthz`                    | Liveness                                   |
+|    GET | `/api/health`                     | Alias for UI back-compat                   |
+|   POST | `/api/ingest/files`               | Multipart file ingest                      |
+|   POST | `/api/ingest/github`              | JSON ingest: `{files:[{path,text,title}]}` |
+|   POST | `/api/knowledge/query`            | RAG query                                  |
+|   POST | `/api/generate/start`             | Start a generation job                     |
+|    GET | `/api/generate/stream?job_id=...` | **SSE** progress/logs/artifacts            |
+|    GET | `/api/exports/{job_id}`           | List/download artifacts                    |
+
+**Example (JSON ingest)**
+
+```python
+import os, requests
+API = "http://localhost:5000/api"
+HEADERS = {
+  "Content-Type": "application/json",
+  "X-API-Key": os.getenv("API_KEY", "dev-key-123"),
+  "X-Tenant-Id": os.getenv("TENANT", "public"),
+}
+requests.post(f"{API}/ingest/github", headers=HEADERS, json={
+  "collection": "workshop_docs",
+  "files": [{"path":"tutorial.md","title":"Tutorial","text":"# My Doc ..."}]
+})
+```
+
+---
+
+## 🧪 Example workflow (CLI)
+
+```bash
+# 1) Ingest a tutorial into collection 'workshop_docs'
+python examples/test_workshop.py
+
+# 2) Follow the SSE stream in your browser
+open "http://localhost:5000/api/generate/stream?job_id=<the-id>"
+
+# 3) Fetch artifacts
+curl -H "X-API-Key: dev-key-123" -H "X-Tenant-Id: public" \
+  http://localhost:5000/api/exports/<job_id> | jq
+```
+
+---
+
+## 🐳 Docker (optional)
+
+A sample Compose file is provided in `infra/` to run the API, worker, and supporting services. Build and run:
+
+```bash
 docker compose -f infra/docker-compose.yml up --build
-# API  -> http://localhost:5000
-# Auth -> use header: X-API-Key: dev-key-123  (change in .env for prod)
 ```
-
-> SSE endpoint: `GET /api/generate/stream?job_id=...`
 
 ---
 
-## 🐍 Local Quick Start (uv)
+## 🧱 A brief note on Redis/RQ
+
+Generation runs as a background job so the API stays snappy and you get **live streaming**.
+Just ensure a local Redis is running and the **RQ worker** is attached (we include tiny scripts):
 
 ```bash
-make check-uv          # installs uv if needed
-make install           # uv sync
-cp .env.example .env   # and fill watsonx creds
-uv run uvicorn server.main:app --host 0.0.0.0 --port 5000
-# In another terminal:
-uv run python -m workers.worker
+# Start/stop Redis container
+bash scripts/redis_up.sh
+bash scripts/redis_down.sh
+
+# Run the worker (in another terminal)
+bash scripts/rq_worker.sh
 ```
 
-Install dev tools:
-```bash
-uv sync --group dev  # ruff, pytest
-```
+> That’s it — no extra Redis knowledge required. The defaults use `redis://localhost:6379/0` and queue `jobs`.
 
 ---
 
-## Authentication & Tenancy
+## 📊 Observability
 
-- **API Key**: send header `X-API-Key: <your-key>`. Configure `API_KEYS` in `.env`.
-- **JWT**: supply `Authorization: Bearer <token>`; set `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_JWKS_URL` (or `JWT_SECRET` for HS256).
-- **Tenant**: pass `X-Tenant-Id: <tenant>`; all vector collections are stored as `<tenant>:<collection>`.
-
----
-
-## Endpoints (high level)
-
-- `GET  /api/healthz` , `GET /api/readyz`
-- `GET  /api/providers`
-- `GET  /api/settings`
-- `POST /api/ingest/files` (multipart: `files[]`, `collection?`)
-- `POST /api/knowledge/query` (`{ q, collection?, k? }`)
-- `POST /api/generate/start` -> returns `{ job_id, stream }`
-- `GET  /api/generate/stream?job_id=...` (SSE)
-- `GET  /api/exports/{job_id}` / `GET /api/exports/{job_id}/{file}`
-
-All authenticated by default.
+* **Structured logs** (JSON) with request IDs
+* **Prometheus**: `/metrics`
+* **Health**: `/api/healthz` (liveness), `/api/readyz` (readiness)
+* **OpenTelemetry** (optional): set `ENABLE_OTEL=true` and OTLP envs
 
 ---
 
-## RAG Details
+## 🧰 Development scripts
 
-- Splitter: `RecursiveCharacterTextSplitter` with `chunk_size=1200`, `overlap=160`.
-- Embeddings: Watsonx **Granite Embedding 278m Multilingual** (configurable).
-- Similarity: cosine distance provided by Chroma; output also includes similarity `= 1 - distance`.
-
----
-
-## Observability
-
-- JSON logs via `structlog`.
-- Prometheus: `/metrics` when `ENABLE_PROMETHEUS=true`.
-- Add OTEL exporter by setting `ENABLE_OTEL=true` and `OTEL_EXPORTER_OTLP_ENDPOINT`.
+* `make install` — create venv & install
+* `make run` — start **backend + frontend** together
+* `make ui-dev` — Vite dev server
+* `make test` — pytest
+* `make lint` / `make fmt` — ruff
+* `make redis-up` / `make redis-down` / `make worker` — convenience hooks
 
 ---
 
-## Deployment
+## 🔒 Security defaults
 
-- Gunicorn + Uvicorn workers (see `infra/Dockerfile` & `infra/gunicorn_conf.py`).
-- Add NGINX/reverse proxy and TLS in front; or use Kubernetes ingress.
-- Serve static UI (if any) via CDN, not from the API.
+* API key required for mutating endpoints
+* CORS configured for local UI (`http://localhost:5173`)
+* Tenancy header defaults to `public` (override per request)
 
----
+For production:
 
-## Makefile Highlights
-
-- `make install` / `make uv-install` – install with **uv**.
-- `make test` / `make lint` / `make fmt` – QA helpers (install dev deps with `uv sync --group dev`).
-- Docker helpers: `make build-container`, `make run-container`, `make logs`, `make stop-container`.
-
-> Note: Docker helpers in the Makefile are generic; prefer `docker compose -f infra/docker-compose.yml up` for the full stack.
+* Rotate API keys, switch to JWT/JWKS
+* Put the API behind TLS
+* Harden CORS to your domain(s)
 
 ---
 
-## License
+## 🧾 License
 
-Licensed under the **Apache-2.0** license.
+**Apache-2.0** — see `LICENSE`.
+
+---
+
+## 🙌 Credits
+
+* **IBM watsonx.ai** Granite models
+* **CrewAI** for agent orchestration
+* **FastAPI**, **Chroma**, **Vite/React**
+

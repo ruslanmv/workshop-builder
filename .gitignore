@@ -22,4 +22,6 @@ dist/
 .idea/
 /backup
  copy *
-/data/redis/appendonlydir
+
+# Redis Data
+data/

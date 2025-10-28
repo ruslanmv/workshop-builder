@@ -1,18 +1,27 @@
+# workers/worker.py
 from __future__ import annotations
-import os, sys
-from rq import Connection, Worker, get_current_job
-import redis
+
 from typing import Any, Dict
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from rq import get_current_job
+import redis
 
 from server.config import Settings
-from server.services.crewai_pipeline import run_job as run_job_impl
 from server.services.jobs import publish_event
+
 
 def _pub(cfg: Settings, job_id: str, event: str, data: dict):
     publish_event(cfg, job_id, event, data)
 
+
 def run_job_worker(project: Dict[str, Any], tenant: str, cfg_dict: Dict[str, Any]):
+    """
+    RQ job entrypoint: runs the pipeline and emits progress/done events.
+    Heavy imports happen here (in the child) to avoid macOS fork issues.
+    """
+    # ✅ Lazy import to keep parent worker "clean" before fork
+    from server.services.crewai_pipeline import run_job as run_job_impl
+
     cfg = Settings.model_validate(cfg_dict)
     job = get_current_job()
     job_id = job.id if job else "local"
@@ -21,7 +30,12 @@ def run_job_worker(project: Dict[str, Any], tenant: str, cfg_dict: Dict[str, Any
     _pub(cfg, job_id, "done", {"ok": True, "artifacts": artifacts})
     return artifacts
 
+
 if __name__ == "__main__":
+    # Import worker classes only when running this module directly.
+    from rq.worker import Worker
+    from rq.connections import Connection
+
     cfg = Settings()
     redis_conn = redis.Redis.from_url(cfg.REDIS_URL)
     with Connection(redis_conn):

@@ -1,5 +1,9 @@
-version: "3.9"
+# infra/docker-compose.yml
+# Compose v2+ (no 'version:' key). Run with: docker compose up --build
+# If you only have docker-compose v1, use: docker-compose up --build
+
 services:
+  # ---------- Backend API ----------
   api:
     build:
       context: ..
@@ -8,13 +12,23 @@ services:
       - ../.env
     environment:
       REDIS_URL: redis://redis:6379/0
-      STATIC_ROOT: /app/ui/dist
-    ports:
-      - "5000:5000"
+      # STATIC_ROOT isn't required when Nginx serves the UI,
+      # but keep it if your code references it.
+      STATIC_ROOT: /usr/share/nginx/html
+      PORT: "5000"
+    expose:
+      - "5000"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
     restart: unless-stopped
 
+  # ---------- RQ Worker ----------
   worker:
     build:
       context: ..
@@ -24,12 +38,47 @@ services:
       - ../.env
     environment:
       REDIS_URL: redis://redis:6379/0
+      RQ_QUEUE: jobs
+      # For Linux containers we use the default forked worker (good for prod).
+      # To force no-fork (e.g., for debugging), set:
+      # RQ_WORKER_CLASS: rq.worker.SimpleWorker
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Simple readiness check that Redis is reachable and RQ can read state
+      test: ["CMD-SHELL", "rq info --url ${REDIS_URL:-redis://redis:6379/0} >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
     restart: unless-stopped
 
+  # ---------- Redis ----------
   redis:
     image: redis:7-alpine
+    command: ["redis-server"]
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  # ---------- Frontend (Nginx + built UI) ----------
+  web:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.nginx
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  redis-data:

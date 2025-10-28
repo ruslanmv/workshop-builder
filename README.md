@@ -1,4 +1,3 @@
-
 <div align="center">
   <h1>🧠 Workshop Builder</h1>
   <p><b>FastAPI + watsonx.ai + RAG (Chroma) + CrewAI</b><br/>Agentic document generation — workshops, books, guides.</p>
@@ -10,255 +9,203 @@
 </div>
 
 ---
+
 ![](assets/2025-10-28-01-01-58.png)
+
+> Production-ready, batteries-included: background jobs with Redis/RQ (SSE streaming), multi-tenant auth, watsonx.ai models, and a modern Vite/React UI. Run locally or with Docker Compose (API + Worker + Redis + Nginx).
+
+---
 
 ## ✨ What it does
 
-**Workshop Builder** turns raw materials (Markdown, docs, repos, web pages) into polished **workshops** and **long-form documents** using:
+**Workshop Builder** turns raw materials (Markdown, docs, repos, web pages) into polished **workshops** and **long-form documents** via an agentic pipeline:
 
-- **Agentic pipeline (CrewAI)** — planner → researcher → writer → formatter → exporter
-- **watsonx.ai** — Granite models for chat + multilingual embeddings
-- **RAG** — token-aware chunking, retrieval via **Chroma** for grounded generation
-- **FastAPI** backend with **SSE** streaming of live progress/logs/artifacts
-- **Multi-tenant & authenticated** API (API key or JWT)
+- **CrewAI**: planner → researcher → writer → formatter → exporter  
+- **watsonx.ai**: Granite/LLM for drafting + embeddings  
+- **RAG**: token-aware chunking & retrieval with **Chroma**  
+- **FastAPI**: secure backend + **SSE** streaming (progress/logs/artifacts)  
+- **Redis/RQ**: reliable background jobs (queue: `jobs`)  
 
-Outputs: `PDF`, `EPUB`, `MkDocs` (site), and zipped artifact bundles.
-
----
-
-
-**Generation flow**
-
-1. **Ingest**: Text is split (token-aware) and embedded with **watsonx.ai**.
-2. **Index**: Chunks + metadata are stored in **Chroma**.
-3. **Plan**: CrewAI **Planner** drafts structure (sections, schedule).
-4. **Research**: **Researcher** queries RAG for highly relevant context.
-5. **Write**: **Writer** composes content grounded in retrieved chunks.
-6. **Format**: **Formatter** prepares layout-ready Markdown/LaTeX.
-7. **Export**: Build **PDF/EPUB/MkDocs**; artifacts are surfaced over SSE.
-
-During generation the backend emits SSE events:
-- `progress` (e.g., “Writing section 3/8”), 
-- `log` (info/debug),
-- `artifact` (downloadable files ready),
-- `done` (job completed).
+**Outputs:** `PDF`, `EPUB`, `MkDocs` site (zipped artifacts via `/api/exports/{job_id}`).
 
 ---
 
-## 🚀 Quick start
-
-### 1) Install (local)
+## 🚀 Quick start (local dev)
 
 ```bash
-# Python 3.11+ recommended
+# 1) Setup Python env (3.11+ recommended)
 make check-uv
 make install
-cp .env.example .env
-# Fill watsonx.ai credentials in .env:
-#   WATSONX_API_KEY=...
-#   WATSONX_PROJECT_ID=...
-#   WATSONX_REGION=us-south
+cp .env.example .env   # fill watsonx.ai creds: API key, project id, region
 ````
 
-### 2) Run backend + frontend together
-
 ```bash
+# 2) Run backend + frontend together (hot reload)
 make run
-# Backend: http://localhost:5000
+# Backend:  http://localhost:5000
 # Frontend: http://localhost:5173
 ```
 
-> If you only want the API: `uv run uvicorn server.main:app --host 0.0.0.0 --port 5000 --reload`
-
-### 3) Minimal E2E smoke test
-
 ```bash
-# Uses sensible defaults: X-API-Key=dev-key-123, tenant=public
+# 3) Smoke test end-to-end (ingest -> generate -> stream -> artifacts)
 python examples/test_workshop.py --download
 ```
 
+> Only want the API?
+> `uv run uvicorn server.main:app --host 0.0.0.0 --port 5000 --reload`
+
 ---
 
-## 🔐 Auth & tenancy (simple by default)
+## 🐳 Production with Docker Compose
 
-* **API key**: send header `X-API-Key: dev-key-123` (change in `.env` → `API_KEYS`)
-* **Tenant**: send header `X-Tenant-Id: public` (default)
-* **JWT** (optional): `Authorization: Bearer <token>` with `JWT_SECRET` or JWKS config
+The infra bundle runs **API**, **Worker**, **Redis**, and **Nginx** (serves UI + proxies `/api` & SSE).
 
-The example and UI **default** to:
+```bash
+# Build images (auto-detects 'docker compose' v2 or 'docker-compose' v1)
+make build-infra
 
-```http
+# Start stack in background
+make run-infra
+
+# Tail logs (all services)
+make monitor-infra
+
+# Stop & clean up
+make stop-infra
+```
+
+URLs:
+
+* UI → `http://localhost/`
+* API → `http://localhost/api`
+* SSE → proxied at `/api/generate/stream`
+
+> Compose files live under `infra/`. See `infra/docker-compose.yml`, `infra/Dockerfile`, `infra/Dockerfile.nginx`, `infra/nginx.conf`.
+
+---
+
+## 🔐 Auth & tenancy
+
+Simple, production-friendly defaults:
+
+* **API key** (default dev): send `X-API-Key: dev-key-123`
+* **Tenant** header: `X-Tenant-Id: public`
+
+You can switch to **JWT** (HS256 or JWKS) in settings if desired.
+
+---
+
+## 🧩 API overview
+
+| Method | Endpoint                        | Purpose                                   |
+| -----: | ------------------------------- | ----------------------------------------- |
+|    GET | `/api/healthz`                  | Liveness                                  |
+|    GET | `/api/readyz`                   | Readiness                                 |
+|    GET | `/api/metrics`                  | Prometheus metrics                        |
+|   POST | `/api/ingest/files`             | Multipart ingest                          |
+|   POST | `/api/ingest/github`            | JSON ingest `{files:[{path,title,text}]}` |
+|   POST | `/api/knowledge/query`          | RAG query                                 |
+|   POST | `/api/generate/start`           | Start background job                      |
+|    GET | `/api/generate/stream?job_id=…` | **SSE** progress/logs/artifacts           |
+|    GET | `/api/exports/{job_id}`         | List/download artifacts                   |
+
+**Headers (dev defaults):**
+
+```
 X-API-Key: dev-key-123
 X-Tenant-Id: public
 ```
 
 ---
 
-## ⚙️ Config highlights
+## ⚙️ Key settings (.env)
 
-`.env` (or environment variables):
+Create `.env` from `.env.example` and fill the watsonx.ai credentials:
 
-```
+```ini
 # App
-APP_NAME="Workshop Builder API"
+PORT=5000
 LOG_LEVEL=INFO
-ENV=dev
-
-# Static UI build
 STATIC_ROOT=./ui/dist
 
-# Auth
-API_KEYS=dev-key-123
-TENANCY_HEADER=X-Tenant-Id
-DEFAULT_TENANT=public
+# Redis/RQ
+REDIS_URL=redis://localhost:6379/0
+RQ_QUEUE=jobs
 
 # Storage
 DATA_DIR=./data
 JOBS_DIR=./data/jobs
 CHROMA_DIR=./data/chroma
 
-# watsonx.ai
+# Auth / Tenancy
+API_KEY=dev-key-123
+TENANT=public
+
+# watsonx.ai (REQUIRED)
 WATSONX_API_KEY=...
 WATSONX_PROJECT_ID=...
 WATSONX_REGION=us-south
-WATSONX_CHAT_MODEL=ibm/granite-13b-instruct-v2
-WATSONX_EMBED_MODEL=ibm/granite-embedding-278m-multilingual
+WATSONX_CHAT_MODEL=meta-llama/llama-3-3-70b-instruct
+WATSONX_EMBED_MODEL=ibm/text-embedding-001
 ```
 
-> The backend **auto-guards** against embedding length issues (512 tokens) by chunking sensibly; if a model complains, it shrinks chunk size and retries.
+> In Docker Compose, services use `REDIS_URL=redis://redis:6379/0`. The worker uses the **forked** RQ worker class by default (production). For macOS local development outside Docker we use a **SimpleWorker** to avoid Obj-C `fork()` issues.
 
 ---
 
-## 🧠 RAG details
+## 🔄 Redis/RQ pipeline (SSE streaming)
 
-* **Splitter**: `RecursiveCharacterTextSplitter`
-  `chunk_size=1200`, `chunk_overlap=160` (tunable per your corpus)
-* **Embeddings**: watsonx.ai Granite multilingual embedding model
-* **Similarity**: cosine (`similarity = 1 - distance`)
-* **Metadata**: source path + optional title carried through, useful for previews
+* **Enqueue:** `POST /api/generate/start` → puts `run_job_worker(...)` on Redis queue `jobs`.
+* **Process:** RQ worker consumes tasks, runs the agentic pipeline, and publishes events to Redis Pub/Sub channel `job:{job_id}:events`.
+* **Stream:** `GET /api/generate/stream?job_id=...` subscribes to Pub/Sub and streams events (`progress`, `log`, `artifact`, `done`) to the browser via **SSE**.
 
----
-
-## 🤖 The agents (CrewAI)
-
-> You can customize or extend the crew in `workers/` (planner/researcher/writer/formatter).
-
-* **Planner**: Transforms intent + source summary → coherent outline.
-* **Researcher**: Routes queries to RAG, curates evidence per section.
-* **Writer**: Produces didactic, grounded prose/code labs from research.
-* **Formatter**: Normalizes structure, fixes headings, adds front-matter.
-* **Exporter**: Builds final **PDF/EPUB/MkDocs** and emits `artifact` events.
-
-Each step publishes **SSE progress** so the UI feels live.
+Cancel is supported via `POST /api/generate/cancel { job_id }` (sets `job:{id}:cancel` key with TTL).
 
 ---
 
-## 🧩 API overview
+## 🧠 RAG & Agents (defaults)
 
-| Method | Endpoint                          | What it does                               |
-| -----: | --------------------------------- | ------------------------------------------ |
-|    GET | `/api/healthz`                    | Liveness                                   |
-|    GET | `/api/health`                     | Alias for UI back-compat                   |
-|   POST | `/api/ingest/files`               | Multipart file ingest                      |
-|   POST | `/api/ingest/github`              | JSON ingest: `{files:[{path,text,title}]}` |
-|   POST | `/api/knowledge/query`            | RAG query                                  |
-|   POST | `/api/generate/start`             | Start a generation job                     |
-|    GET | `/api/generate/stream?job_id=...` | **SSE** progress/logs/artifacts            |
-|    GET | `/api/exports/{job_id}`           | List/download artifacts                    |
-
-**Example (JSON ingest)**
-
-```python
-import os, requests
-API = "http://localhost:5000/api"
-HEADERS = {
-  "Content-Type": "application/json",
-  "X-API-Key": os.getenv("API_KEY", "dev-key-123"),
-  "X-Tenant-Id": os.getenv("TENANT", "public"),
-}
-requests.post(f"{API}/ingest/github", headers=HEADERS, json={
-  "collection": "workshop_docs",
-  "files": [{"path":"tutorial.md","title":"Tutorial","text":"# My Doc ..."}]
-})
-```
+* **Splitter:** Recursive chars (`chunk_size≈1200`, `overlap≈160`)
+* **Vector DB:** Chroma (cosine similarity)
+* **Embeddings:** watsonx.ai (e.g., `ibm/text-embedding-001`)
+* **CrewAI roles:** Planner → Researcher → Writer → Formatter → Exporter
+* **Exports:** creates `pdf`, `epub`, `mkdocs` artifacts and emits them over SSE.
 
 ---
 
-## 🧪 Example workflow (CLI)
+## 🧰 Dev & Ops commands
+
+**Makefile (cross-platform):**
+
+* Python: `make install`, `make run`, `make run-api`, `make ui-dev`, `make test`, `make lint`, `make fmt`
+* Infra: `make build-infra`, `make run-infra`, `make monitor-infra`, `make stop-infra`
+
+**Redis & worker (local only):**
 
 ```bash
-# 1) Ingest a tutorial into collection 'workshop_docs'
-python examples/test_workshop.py
-
-# 2) Follow the SSE stream in your browser
-open "http://localhost:5000/api/generate/stream?job_id=<the-id>"
-
-# 3) Fetch artifacts
-curl -H "X-API-Key: dev-key-123" -H "X-Tenant-Id: public" \
-  http://localhost:5000/api/exports/<job_id> | jq
+bash scripts/redis_up.sh     # start local Redis container
+bash scripts/rq_worker.sh    # attach worker (uses SimpleWorker on macOS)
+bash scripts/redis_tests.sh  # smoke test ping + RQ job
 ```
 
 ---
 
-## 🐳 Docker (optional)
+## 🛡️ Production notes
 
-A sample Compose file is provided in `infra/` to run the API, worker, and supporting services. Build and run:
-
-```bash
-docker compose -f infra/docker-compose.yml up --build
-```
-
----
-
-## 🧱 A brief note on Redis/RQ
-
-Generation runs as a background job so the API stays snappy and you get **live streaming**.
-Just ensure a local Redis is running and the **RQ worker** is attached (we include tiny scripts):
-
-```bash
-# Start/stop Redis container
-bash scripts/redis_up.sh
-bash scripts/redis_down.sh
-
-# Run the worker (in another terminal)
-bash scripts/rq_worker.sh
-```
-
-> That’s it — no extra Redis knowledge required. The defaults use `redis://localhost:6379/0` and queue `jobs`.
+* **Nginx** terminates HTTP, serves the Vite build, and proxies `/api` + SSE with buffering **disabled**.
+* **Gunicorn** (`WEB_CONCURRENCY`) defaults to `cpu_count()` workers; tune per CPU/RAM.
+* **Security:** rotate API keys, prefer JWT/JWKS, set strict CORS, run behind TLS.
+* **Observability:** `/metrics` for Prometheus; optional OpenTelemetry exporters.
+* **Persistence:** mount volumes for Redis data and `data/` if you need durable artifacts.
 
 ---
 
-## 📊 Observability
+## 🧯 Troubleshooting
 
-* **Structured logs** (JSON) with request IDs
-* **Prometheus**: `/metrics`
-* **Health**: `/api/healthz` (liveness), `/api/readyz` (readiness)
-* **OpenTelemetry** (optional): set `ENABLE_OTEL=true` and OTLP envs
-
----
-
-## 🧰 Development scripts
-
-* `make install` — create venv & install
-* `make run` — start **backend + frontend** together
-* `make ui-dev` — Vite dev server
-* `make test` — pytest
-* `make lint` / `make fmt` — ruff
-* `make redis-up` / `make redis-down` / `make worker` — convenience hooks
-
----
-
-## 🔒 Security defaults
-
-* API key required for mutating endpoints
-* CORS configured for local UI (`http://localhost:5173`)
-* Tenancy header defaults to `public` (override per request)
-
-For production:
-
-* Rotate API keys, switch to JWT/JWKS
-* Put the API behind TLS
-* Harden CORS to your domain(s)
+* **Compose v1 vs v2:** The Makefile auto-detects `docker compose` (v2) vs `docker-compose` (v1).
+* **Setuptools package discovery:** `pyproject.toml` restricts discovery to `server*` & `workers*` to avoid packaging UI & infra.
+* **macOS Obj-C `fork()` crash:** local worker script uses `rq.worker.SimpleWorker` and sets `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` (inside Docker/Linux we use the default forked worker).
+* **watsonx.ai 400 “max sequence length”**: we chunk input conservatively; if you change models, adjust splitter size/overlap accordingly.
 
 ---
 
@@ -271,6 +218,6 @@ For production:
 ## 🙌 Credits
 
 * **IBM watsonx.ai** Granite models
-* **CrewAI** for agent orchestration
-* **FastAPI**, **Chroma**, **Vite/React**
+* **CrewAI** orchestration
+* **FastAPI**, **Chroma**, **Vite/React**, **Redis/RQ**
 

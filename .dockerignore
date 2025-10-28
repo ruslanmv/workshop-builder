@@ -1,10 +1,39 @@
-.venv
-.git
-.gitignore
-__pycache__
+# Python
+__pycache__/
 *.pyc
-ui/node_modules
-dist
-build
-.pytest_cache
-.ruff_cache
+*.pyo
+*.pyd
+*.pytest_cache/
+.mypy_cache/
+.pytype/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Node
+ui/node_modules/
+ui/.vite/
+ui/.next/
+ui/dist/  # built by Docker
+
+# VCS / editor
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Local data
+data/*
+!data/.gitkeep
+
+# Docker
+*.log

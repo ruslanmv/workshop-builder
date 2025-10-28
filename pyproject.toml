@@ -1,3 +1,9 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "workshop-builder-server"
 version = "1.1.0"
@@ -32,7 +38,7 @@ dependencies = [
   "slowapi>=0.1.9",
   "pyjwt>=2.9.0",
 
-  # obs
+  # observability
   "structlog>=24.1.0",
   "prometheus-fastapi-instrumentator>=7.0.0",
   "opentelemetry-sdk>=1.25.0",
@@ -44,6 +50,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3.3", "ruff>=0.6.8"]
+
+[tool.setuptools]
+# We use a flat layout (packages live at repo root)
+package-dir = { "" = "." }
+
+[tool.setuptools.packages.find]
+# ✅ Only package our Python apps
+include = ["server*", "workers*"]
+# 🚫 Exclude non-package folders from discovery
+exclude = ["ui*", "infra*", "redis*", "data*", "assets*", "backup*", "scripts*", "tests*", "examples*", "docs*"]
 
 [tool.black]
 line-length = 100

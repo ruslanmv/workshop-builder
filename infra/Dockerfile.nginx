@@ -1,0 +1,34 @@
+# infra/Dockerfile.nginx
+
+############################
+# Stage 1: Build the UI
+############################
+FROM node:20-alpine AS ui-builder
+
+WORKDIR /build/ui
+
+# Only copy package manifests first for better layer caching
+COPY ui/package*.json ./ 
+# If you use pnpm or yarn, copy their lockfiles instead and adjust commands
+
+RUN npm ci
+
+# Now copy the UI source and build
+COPY ui/ ./ 
+# Most Vite/React builds output to "dist"; adjust if yours differs
+RUN npm run build
+
+############################
+# Stage 2: Nginx to serve UI & proxy API
+############################
+FROM nginx:alpine AS web
+
+# Replace Nginx config with our reverse-proxy + SSE-friendly config
+COPY infra/nginx.conf /etc/nginx/nginx.conf
+
+# Copy built UI to nginx web root
+COPY --from=ui-builder /build/ui/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx","-g","daemon off;"]

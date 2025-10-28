@@ -54,15 +54,14 @@ endif
 PY_EXE  := $(VENV)/$(BIN_DIR)/python$(PY_SUFFIX)
 PIP_EXE := $(VENV)/$(BIN_DIR)/pip$(PY_SUFFIX)
 
-# Docker Config (optional)
-DOCKER_IMAGE ?= simple-env:latest
-DOCKER_NAME  ?= simple-env
-DOCKER_PORT  ?= 8888
+# Paths
+INFRA_DIR ?= infra
 
 .PHONY: help venv install pip-install dev uv-install update test lint fmt check shell clean distclean \
-        clean-venv build-container run-container stop-container remove-container logs \
-        check-python check-pyproject check-uv python-version \
-        ui-build ui-dev run run-api run-ui
+        clean-venv \
+        ui-build ui-dev run run-api run-ui python-version \
+        build-infra run-infra stop-infra monitor-infra \
+        check-python check-pyproject check-uv
 
 # =============================================================================
 #  Helper Scripts (exported env vars; expanded by the shell)
@@ -244,32 +243,102 @@ else
 	cd ui && ([ -d node_modules ] || npm ci) && npm run dev -- --port $(PORT_FRONTEND)
 endif
 
-# --- Docker (optional helpers) ---
+# =============================================================================
+#  Infra (Docker Compose) Helpers
+# =============================================================================
+# These auto-detect Compose v2 (docker compose) vs v1 (docker-compose)
 
-build-container: check-pyproject ## Build the Docker image
-	@echo "Building image '$(DOCKER_IMAGE)'..."
-	@docker build -t $(DOCKER_IMAGE) .
-
+build-infra: ## Build all Docker images in infra/docker-compose.yml
 ifeq ($(OS),Windows_NT)
-run-container: ## Run or restart the container in detached mode
-	@docker run -d --name $(DOCKER_NAME) -p $(DOCKER_PORT):8888 -v $(MOUNT_SRC):/workspace $(DOCKER_IMAGE) > $(NULL_DEVICE) 2> $(NULL_DEVICE); if ($$LASTEXITCODE -ne 0) { docker start $(DOCKER_NAME) > $(NULL_DEVICE) 2> $(NULL_DEVICE) }
-	@echo "Container is up at http://localhost:$(DOCKER_PORT)"
+	@Push-Location '$(INFRA_DIR)'; \
+	if (Get-Command docker -ErrorAction SilentlyContinue) { \
+		docker compose version > $(NULL_DEVICE) 2>&1; \
+		if ($$LASTEXITCODE -eq 0) { docker compose build } \
+		elseif (Get-Command docker-compose -ErrorAction SilentlyContinue) { docker-compose build } \
+		else { Write-Error '❌ Docker Compose not found. Install Docker Desktop or docker-compose.'; Pop-Location; exit 1 } \
+	} else { Write-Error '❌ Docker not found.'; Pop-Location; exit 1 }; \
+	Pop-Location
 else
-run-container: ## Run or restart the container in detached mode
-	@docker run -d --name $(DOCKER_NAME) -p $(DOCKER_PORT):8888 -v $(MOUNT_SRC):/workspace $(DOCKER_IMAGE) > $(NULL_DEVICE) || docker start $(DOCKER_NAME)
-	@echo "Container is up at http://localhost:$(DOCKER_PORT)"
+	@cd "$(INFRA_DIR)"; \
+	if docker compose version >/dev/null 2>&1; then \
+		docker compose build; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose build; \
+	else \
+		echo "❌ Docker Compose not found. Install Docker Desktop or docker-compose."; exit 1; \
+	fi
 endif
 
-stop-container: ## Stop the running container
-	@docker stop $(DOCKER_NAME) >$(NULL_DEVICE) 2>&1 || echo "Info: container was not running."
+run-infra: ## Start the full stack in background (api, worker, redis, web)
+ifeq ($(OS),Windows_NT)
+	@Push-Location '$(INFRA_DIR)'; \
+	if (Get-Command docker -ErrorAction SilentlyContinue) { \
+		docker compose version > $(NULL_DEVICE) 2>&1; \
+		if ($$LASTEXITCODE -eq 0) { docker compose up -d } \
+		elseif (Get-Command docker-compose -ErrorAction SilentlyContinue) { docker-compose up -d } \
+		else { Write-Error '❌ Docker Compose not found.'; Pop-Location; exit 1 } \
+	} else { Write-Error '❌ Docker not found.'; Pop-Location; exit 1 }; \
+	Pop-Location; \
+	echo '🌐 UI:  http://localhost/'; \
+	echo '🧰 API: http://localhost/api'
+else
+	@cd "$(INFRA_DIR)"; \
+	if docker compose version >/dev/null 2>&1; then \
+		docker compose up -d; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose up -d; \
+	else \
+		echo "❌ Docker Compose not found."; exit 1; \
+	fi; \
+	echo "🌐 UI:  http://localhost/"; \
+	echo "🧰 API: http://localhost/api"
+endif
 
-remove-container: stop-container ## Stop and remove the container
-	@docker rm $(DOCKER_NAME) >$(NULL_DEVICE) 2>&1 || echo "Info: container did not exist."
+stop-infra: ## Stop and remove the stack (containers, networks)
+ifeq ($(OS),Windows_NT)
+	@Push-Location '$(INFRA_DIR)'; \
+	if (Get-Command docker -ErrorAction SilentlyContinue) { \
+		docker compose version > $(NULL_DEVICE) 2>&1; \
+		if ($$LASTEXITCODE -eq 0) { docker compose down --remove-orphans } \
+		elseif (Get-Command docker-compose -ErrorAction SilentlyContinue) { docker-compose down --remove-orphans } \
+		else { Write-Error '❌ Docker Compose not found.'; Pop-Location; exit 1 } \
+	} else { Write-Error '❌ Docker not found.'; Pop-Location; exit 1 }; \
+	Pop-Location
+else
+	@cd "$(INFRA_DIR)"; \
+	if docker compose version >/dev/null 2>&1; then \
+		docker compose down --remove-orphans; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose down --remove-orphans; \
+	else \
+		echo "❌ Docker Compose not found."; exit 1; \
+	fi
+endif
 
-logs: ## View the container logs (Ctrl-C to exit)
-	@docker logs -f $(DOCKER_NAME)
+monitor-infra: ## Tail logs for all services (Ctrl-C to stop)
+ifeq ($(OS),Windows_NT)
+	@Push-Location '$(INFRA_DIR)'; \
+	if (Get-Command docker -ErrorAction SilentlyContinue) { \
+		docker compose version > $(NULL_DEVICE) 2>&1; \
+		if ($$LASTEXITCODE -eq 0) { docker compose logs -f } \
+		elseif (Get-Command docker-compose -ErrorAction SilentlyContinue) { docker-compose logs -f } \
+		else { Write-Error '❌ Docker Compose not found.'; Pop-Location; exit 1 } \
+	} else { Write-Error '❌ Docker not found.'; Pop-Location; exit 1 }; \
+	Pop-Location
+else
+	@cd "$(INFRA_DIR)"; \
+	if docker compose version >/dev/null 2>&1; then \
+		docker compose logs -f; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose logs -f; \
+	else \
+		echo "❌ Docker Compose not found."; exit 1; \
+	fi
+endif
 
-# --- Utility ---
+# =============================================================================
+#  Utility
+# =============================================================================
 
 python-version: check-python ## Show resolved Python interpreter and version
 ifeq ($(OS),Windows_NT)

@@ -1,14 +1,14 @@
-Current stack (FastAPI API, Vite/React UI via Nginx, Redis/RQ worker, CrewAI Flows, watsonx.ai LLM+embeddings, Chroma, SSE streaming).
 
----
 
-## 1) High-level architecture
+1)  High-level architecture
+
+<!-- end list -->
 
 ```mermaid
 flowchart LR
     U[User<br/>Browser] -->|HTTP 80| NX[Nginx<br/>serves UI & proxies /api/* & SSE]
     NX -->|/api/*| API[FastAPI Backend<br/>server.main]
-    NX -->|/ (UI)| UI[Vite/React Build<br/>/usr/share/nginx/html]
+    NX -->|/ UI| UI[Vite/React Build<br/>/usr/share/nginx/html]
 
     subgraph SVC[Backend Services]
       API -->|enqueue job| RQ[Redis RQ<br/>queue: jobs]
@@ -37,25 +37,25 @@ flowchart LR
     class U,NX,API,UI,RQ,WK,FL,RS,SP,EMB,CH,WR,EXP,FS,BR node;
 ```
 
----
+2)  Sequence — Ingest & Generate (API + Worker + SSE)
 
-## 2) Sequence — Ingest & Generate (API + Worker + SSE)
+<!-- end list -->
 
 ```mermaid
 sequenceDiagram
     participant Dev as User Browser
     participant NX as Nginx
     participant API as FastAPI /api
-    participant RQ as Redis (queue jobs)
+    participant RQ as Redis queue jobs
     participant W as RQ Worker
     participant Flow as CrewAI Flow
-    participant CH as Chroma (RAG)
-    participant SSE as EventSource (SSE)
+    participant CH as Chroma RAG
+    participant SSE as EventSource SSE
 
     Dev->>NX: POST /api/ingest/github { files[] } + headers
     NX->>API: /api/ingest/github
-    API->>API: Split (chunk_size/overlap)
-    API->>API: Embed via watsonx.ai (model=embedding)
+    API->>API: Split chunk_size/overlap
+    API->>API: Embed via watsonx.ai model=embedding
     API->>CH: upsert vectors + metadata
     API-->>NX: 202 Accepted { stats }
 
@@ -66,19 +66,19 @@ sequenceDiagram
 
     Dev->>SSE: GET /api/generate/stream?job_id=...
     activate SSE
-    API->>RQ: (worker picks job)
+    API->>RQ: worker picks job
     RQ->>W: perform_job
     W->>Flow: kickoff()
-    Flow->>CH: similarity search (RAG)
-    Flow-->>W: progress/logs/artifacts (via emitter)
+    Flow->>CH: similarity search RAG
+    Flow-->>W: progress/logs/artifacts via emitter
     W->>API: publish(event) -> Redis Pub/Sub
     API-->>SSE: SSE: progress/log/artifact/done
     deactivate SSE
 ```
 
----
+3)  Sequence — /knowledge ingest & query (RAG)
 
-## 3) Sequence — /knowledge ingest & query (RAG)
+<!-- end list -->
 
 ```mermaid
 sequenceDiagram
@@ -86,7 +86,7 @@ sequenceDiagram
     participant API as FastAPI /api/knowledge
     participant Split as Token Splitter
     participant Emb as watsonx.ai Embeddings
-    participant V as Chroma (Vector DB)
+    participant V as Chroma Vector DB
 
     Caller->>API: POST /api/ingest/files { paths,chunk_size,overlap,collection }
     API->>Split: split documents
@@ -101,9 +101,9 @@ sequenceDiagram
     API-->>Caller: results
 ```
 
----
+4)  Deployment topology (docker-compose)
 
-## 4) Deployment topology (docker-compose)
+<!-- end list -->
 
 ```mermaid
 flowchart LR
@@ -129,9 +129,9 @@ flowchart LR
     classDef vol fill:#ffe,stroke:#aa3,stroke-width:1.2px;
 ```
 
----
+5)  Data lifecycle — from sources to artifacts
 
-## 5) Data lifecycle — from sources to artifacts
+<!-- end list -->
 
 ```mermaid
 flowchart TB
@@ -140,25 +140,25 @@ flowchart TB
     SPLIT --> EMB[watsonx.ai Embeddings]
     EMB --> CH[Chroma<br/>persisted collection]
     CH --> RAG[RAG Retrieval<br/>top-k contexts]
-    RAG --> PLAN[Planner/Researcher (CrewAI)]
-    PLAN --> WRITE[Writer/Formatter (CrewAI)]
+    RAG --> PLAN[Planner/Researcher CrewAI]
+    PLAN --> WRITE[Writer/Formatter CrewAI]
     WRITE --> MS[Manuscript.md]
     MS --> EXP[Exporters<br/>PDF • EPUB • MkDocs]
     EXP --> ART[Artifacts on Disk<br/>/data/jobs/{id}/artifacts]
     ART --> DL[Downloads via /api/exports/{id}]
 ```
 
----
+6)  Config & control plane
 
-## 6) Config & control plane
+<!-- end list -->
 
 ```mermaid
 flowchart LR
     ENV[.env / env vars] --> CFG[Pydantic Settings]
     CFG --> LLM[LLM Builder<br/>CREW_PROVIDER=watsonx|openai|ollama]
     CFG --> API[FastAPI App]
-    LLM --> Flow[WorkshopBuildFlow (CrewAI)]
-    API --> Q[Redis Queue (RQ)]
+    LLM --> Flow[WorkshopBuildFlow CrewAI]
+    API --> Q[Redis Queue RQ]
     Q --> Worker[RQ Worker]
     Worker --> Flow
 
@@ -170,4 +170,4 @@ flowchart LR
     Obs --> Prom[Prometheus / OTEL]
 ```
 
-These reflect your **current** design: FastAPI backend, Nginx front, Redis/RQ, **CrewAI Flows** with explicitly injected LLM (watsonx.ai by default), **Chroma** for vectors, and **SSE** for realtime progress + artifacts.
+These reflect your current design: FastAPI backend, Nginx front, Redis/RQ, CrewAI Flows with explicitly injected LLM (watsonx.ai by default), Chroma for vectors, and SSE for realtime progress + artifacts.

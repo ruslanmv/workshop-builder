@@ -28,3 +28,4 @@ data/
 *.rdb
 data/redis/dump.rdb
 uv.lock
+data/redis/dump.rdb

@@ -22,3 +22,4 @@ dist/
 .idea/
 /backup
  copy *
+/data/redis/appendonlydir

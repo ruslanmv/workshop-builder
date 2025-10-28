@@ -171,6 +171,12 @@ Cancel is supported via `POST /api/generate/cancel { job_id }` (sets `job:{id}:c
 * **CrewAI roles:** Planner → Researcher → Writer → Formatter → Exporter
 * **Exports:** creates `pdf`, `epub`, `mkdocs` artifacts and emits them over SSE.
 
+
+## Crewai Flows
+
+![](assets/2025-10-28-11-33-21.png)
+```bash
+```
 ---
 
 ## 🧰 Dev & Ops commands

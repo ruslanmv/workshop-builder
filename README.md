@@ -1,6 +1,6 @@
 <div align="center">
   <h1>🧠 Workshop Builder</h1>
-  <p><b>FastAPI + watsonx.ai + RAG (Chroma) + CrewAI</b><br/>Agentic document generation — workshops, books, guides.</p>
+  <p><b>FastAPI + watsonx.ai + RAG (Chroma) + CrewAI Flows</b><br/>Agentic document generation — workshops, books, guides.</p>
   <p>
     <img alt="Python Version" src="https://img.shields.io/badge/python-3.11+-blue.svg">
     <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg">
@@ -12,7 +12,7 @@
 
 ![](assets/2025-10-28-01-01-58.png)
 
-> Production-ready, batteries-included: background jobs with Redis/RQ (SSE streaming), multi-tenant auth, watsonx.ai models, and a modern Vite/React UI. Run locally or with Docker Compose (API + Worker + Redis + Nginx).
+> Production-ready, batteries included: background jobs with Redis/RQ (SSE streaming), multi-tenant auth, watsonx.ai models, and a modern Vite/React UI. Run locally or with Docker Compose (API + Worker + Redis + Nginx).
 
 ---
 
@@ -20,11 +20,11 @@
 
 **Workshop Builder** turns raw materials (Markdown, docs, repos, web pages) into polished **workshops** and **long-form documents** via an agentic pipeline:
 
-- **CrewAI**: planner → researcher → writer → formatter → exporter  
-- **watsonx.ai**: Granite/LLM for drafting + embeddings  
-- **RAG**: token-aware chunking & retrieval with **Chroma**  
-- **FastAPI**: secure backend + **SSE** streaming (progress/logs/artifacts)  
-- **Redis/RQ**: reliable background jobs (queue: `jobs`)  
+* **CrewAI Flows**: planner → researcher → writer → formatter → exporter
+* **watsonx.ai**: Granite/LLM for drafting + embeddings
+* **RAG**: token-aware chunking & retrieval with **Chroma**
+* **FastAPI**: secure backend + **SSE** streaming (progress/logs/artifacts)
+* **Redis/RQ**: reliable background jobs (queue: `jobs`)
 
 **Outputs:** `PDF`, `EPUB`, `MkDocs` site (zipped artifacts via `/api/exports/{job_id}`).
 
@@ -37,7 +37,7 @@
 make check-uv
 make install
 cp .env.example .env   # fill watsonx.ai creds: API key, project id, region
-````
+```
 
 ```bash
 # 2) Run backend + frontend together (hot reload)
@@ -88,7 +88,7 @@ URLs:
 
 Simple, production-friendly defaults:
 
-* **API key** (default dev): send `X-API-Key: dev-key-123`
+* **API key** (dev): send `X-API-Key: dev-key-123`
 * **Tenant** header: `X-Tenant-Id: public`
 
 You can switch to **JWT** (HS256 or JWKS) in settings if desired.
@@ -141,43 +141,83 @@ CHROMA_DIR=./data/chroma
 API_KEY=dev-key-123
 TENANT=public
 
-# watsonx.ai (REQUIRED)
-WATSONX_API_KEY=...
+# Crew LLM selection
+CREW_PROVIDER=watsonx  # or: openai | ollama
+
+# watsonx.ai (REQUIRED for CREW_PROVIDER=watsonx)
+WATSONX_APIKEY=...                # alias required by some libs
+WATSONX_API_KEY=...               # same value as above
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
 WATSONX_PROJECT_ID=...
 WATSONX_REGION=us-south
 WATSONX_CHAT_MODEL=meta-llama/llama-3-3-70b-instruct
 WATSONX_EMBED_MODEL=ibm/text-embedding-001
+
+# Generation defaults
+CREW_TEMPERATURE=0.2
+
+# (Optional) OpenAI
+# OPENAI_API_KEY=...
+# OPENAI_MODEL=gpt-4o-mini
+
+# (Optional) Ollama
+# OLLAMA_HOST=http://localhost:11434
+# OLLAMA_MODEL=llama3.1
 ```
 
-> In Docker Compose, services use `REDIS_URL=redis://redis:6379/0`. The worker uses the **forked** RQ worker class by default (production). For macOS local development outside Docker we use a **SimpleWorker** to avoid Obj-C `fork()` issues.
+> In Docker Compose, services use `REDIS_URL=redis://redis:6379/0`.
+> On macOS local dev (outside Docker), the worker script uses a **SimpleWorker** to avoid Obj-C `fork()` issues.
 
 ---
 
-## 🔄 Redis/RQ pipeline (SSE streaming)
+## 🔄 Job pipeline & SSE streaming
 
-* **Enqueue:** `POST /api/generate/start` → puts `run_job_worker(...)` on Redis queue `jobs`.
-* **Process:** RQ worker consumes tasks, runs the agentic pipeline, and publishes events to Redis Pub/Sub channel `job:{job_id}:events`.
-* **Stream:** `GET /api/generate/stream?job_id=...` subscribes to Pub/Sub and streams events (`progress`, `log`, `artifact`, `done`) to the browser via **SSE**.
+1. **Enqueue**
+   `POST /api/generate/start` places a job on Redis queue `jobs` and returns `{ job_id, stream }`.
 
-Cancel is supported via `POST /api/generate/cancel { job_id }` (sets `job:{id}:cancel` key with TTL).
+2. **Process**
+   RQ worker runs the CrewAI Flow and publishes events to Redis Pub/Sub channel `job:{job_id}:events`.
+
+3. **Stream**
+   `GET /api/generate/stream?job_id=...` subscribes and streams live **SSE** events:
+
+   * `progress` → `{ pct, msg }`
+   * `log` → `{ level, msg }`
+   * `artifact` → `{ type, label, path, filename, size }`
+   * `done` → `{ ok, artifacts? }`
+
+4. **Export**
+   Artifacts are persisted under the job’s artifact folder and listed via `/api/exports/{job_id}`.
+
+Cancel: `POST /api/generate/cancel` with `{ "job_id": "…" }`.
 
 ---
 
-## 🧠 RAG & Agents (defaults)
+## 🧠 RAG & embeddings
 
-* **Splitter:** Recursive chars (`chunk_size≈1200`, `overlap≈160`)
-* **Vector DB:** Chroma (cosine similarity)
-* **Embeddings:** watsonx.ai (e.g., `ibm/text-embedding-001`)
-* **CrewAI roles:** Planner → Researcher → Writer → Formatter → Exporter
-* **Exports:** creates `pdf`, `epub`, `mkdocs` artifacts and emits them over SSE.
+* **Splitter:** `RecursiveCharacterTextSplitter` (≈1200 tokens, 160 overlap; tune to your corpus)
+* **Vector DB:** Chroma (`cosine` similarity)
+* **Embeddings:** watsonx.ai (`ibm/text-embedding-001` recommended)
 
+  > If you use `ibm/slate-125m-english-rtrvr`, keep chunks ≤ 510 tokens (model max 512 incl. BOS/EOS).
 
-## Crewai Flows
+---
+
+## 🤖 CrewAI Flows (how it works)
+
+The project uses **CrewAI Flows** for deterministic, observable, multi-agent orchestration with typed state and conditional routing.
 
 ![](assets/2025-10-28-11-33-21.png)
-```bash
-```
----
+
+### Why Flows?
+
+* **Structured state** with Pydantic (e.g., `WorkshopState`)
+* **Explicit steps** with decorators: `@start`, `@listen`, `@router`, `or_(...)`
+* **Conditional routing** (“high/medium/low confidence” branches)
+* **LLM injection** so agents never “guess” a provider
+
+
+
 
 ## 🧰 Dev & Ops commands
 
@@ -191,7 +231,41 @@ Cancel is supported via `POST /api/generate/cancel { job_id }` (sets `job:{id}:c
 ```bash
 bash scripts/redis_up.sh     # start local Redis container
 bash scripts/rq_worker.sh    # attach worker (uses SimpleWorker on macOS)
-bash scripts/redis_tests.sh  # smoke test ping + RQ job
+```
+
+## Architercutre
+```mermaid
+flowchart TB
+    U[User<br/>Browser] -->|HTTP port 80| NX[Nginx<br/>serves UI and proxies /api and SSE]
+    NX -->|/api| API[FastAPI Backend<br/>server.main]
+    NX -->|/ for UI| UI[Vite and React build<br/>usr share nginx html]
+
+    subgraph SVC[Backend services]
+      API -->|enqueue job| RQ[Redis RQ<br/>queue jobs]
+      RQ --> WK[RQ Worker<br/>workers.worker]
+      WK --> FL[CrewAI Flow<br/>WorkshopBuildFlow]
+      API -->|Pub Sub| RS[Redis Pub Sub<br/>channel job_id_events]
+      NX -->|/api/generate/stream| API
+    end
+
+    API -->|SSE| BR[Browser EventSource]
+
+    subgraph RAG[RAG stack]
+      SP[Token aware splitter] --> EMB[watsonx.ai embeddings]
+      EMB --> CH[Chroma DB<br/>local persistent]
+      API -->|/api/ingest| SP
+      API -->|/api/knowledge/query| CH
+    end
+
+    subgraph GEN[Generation and exports]
+      FL --> WR[Writer and Formatter agents]
+      WR --> EXP[Exporters<br/>PDF  EPUB  MkDocs]
+      EXP --> FS[Artifacts on disk<br/>data jobs job_id artifacts]
+      API -->|/api/exports job_id| FS
+    end
+
+    classDef node fill:#f6f9ff,stroke:#557,stroke-width:1.1px;
+    class U,NX,API,UI,RQ,WK,FL,RS,SP,EMB,CH,WR,EXP,FS,BR node;
 ```
 
 ---
@@ -200,7 +274,7 @@ bash scripts/redis_tests.sh  # smoke test ping + RQ job
 
 * **Nginx** terminates HTTP, serves the Vite build, and proxies `/api` + SSE with buffering **disabled**.
 * **Gunicorn** (`WEB_CONCURRENCY`) defaults to `cpu_count()` workers; tune per CPU/RAM.
-* **Security:** rotate API keys, prefer JWT/JWKS, set strict CORS, run behind TLS.
+* **Security:** rotate API keys, prefer JWT/JWKS, set strict CORS, and run behind TLS.
 * **Observability:** `/metrics` for Prometheus; optional OpenTelemetry exporters.
 * **Persistence:** mount volumes for Redis data and `data/` if you need durable artifacts.
 
@@ -208,10 +282,21 @@ bash scripts/redis_tests.sh  # smoke test ping + RQ job
 
 ## 🧯 Troubleshooting
 
-* **Compose v1 vs v2:** The Makefile auto-detects `docker compose` (v2) vs `docker-compose` (v1).
-* **Setuptools package discovery:** `pyproject.toml` restricts discovery to `server*` & `workers*` to avoid packaging UI & infra.
-* **macOS Obj-C `fork()` crash:** local worker script uses `rq.worker.SimpleWorker` and sets `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` (inside Docker/Linux we use the default forked worker).
-* **watsonx.ai 400 “max sequence length”**: we chunk input conservatively; if you change models, adjust splitter size/overlap accordingly.
+* **“OPENAI_API_KEY is required”**
+  You’re hitting CrewAI’s default provider. Ensure:
+
+  * `CREW_PROVIDER=watsonx` (or your target),
+  * `WATSONX_APIKEY` & `WATSONX_API_KEY` set (same value),
+  * Flow agents are created with `llm=self.llm`.
+
+* **LiteLLM fallback error**
+  Means a non-native LLM object slipped in. Use our `build_crewai_llm` and pass `llm=` into every `Agent` and `Crew`.
+
+* **macOS Obj-C `fork()` crash**
+  Use `rq.worker.SimpleWorker` or run inside Docker (forked is fine on Linux). Our local worker script handles this.
+
+* **watsonx embeddings 512-token limit**
+  Keep chunk size ≤ 510 tokens for `ibm/slate-125m-english-rtrvr`, or use `ibm/text-embedding-001`.
 
 ---
 
@@ -226,4 +311,3 @@ bash scripts/redis_tests.sh  # smoke test ping + RQ job
 * **IBM watsonx.ai** Granite models
 * **CrewAI** orchestration
 * **FastAPI**, **Chroma**, **Vite/React**, **Redis/RQ**
-

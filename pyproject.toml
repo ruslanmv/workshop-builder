@@ -26,6 +26,10 @@ dependencies = [
 
   # IBM watsonx.ai
   "ibm-watsonx-ai>=1.2.10",
+  "langchain-core>=0.3.79",
+  "langchain-ibm>=0.3.19",
+  "litellm>=1.60.0",
+
 
   # CrewAI (optional in worker pipeline)
   "crewai>=0.56.0",

@@ -26,3 +26,5 @@ dist/
 # Redis Data
 data/
 *.rdb
+data/redis/dump.rdb
+uv.lock

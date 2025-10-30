@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Stop and clear ANY local Redis instance so ports are freed and names don't collide.
-# Safe for macOS, Linux, and WSL.
+# Safe for macOS, Linux, and WSL/Git Bash (when run under bash).
 #
 # Usage:
-#   bash scripts/redis_kill.sh            # uses defaults (PORT=6379, CONTAINER=wb-redis)
+#   bash scripts/redis_kill.sh                 # defaults (PORT=6379, CONTAINER=wb-redis)
 #   REDIS_PORT=6380 bash scripts/redis_kill.sh
 #   REDIS_CONTAINER=my-redis bash scripts/redis_kill.sh
 #
@@ -24,15 +24,23 @@ warn() { printf "\033[33m⚠️  %s\033[0m\n" "$*"; }
 ok()   { printf "\033[32m✅ %s\033[0m\n" "$*"; }
 err()  { printf "\033[31m❌ %s\033[0m\n" "$*" 1>&2; }
 
+# --- Port helpers (prefer tools available on the host) -----------------------
 port_in_use() {
   local p=$1
   if command -v ss >/dev/null 2>&1; then
-    ss -lnt "( sport = :${p} )" 2>/dev/null | grep -q LISTEN && return 0 || return 1
+    # Generic parse of local address column ($4)
+    ss -ltn 2>/dev/null | awk -v pat=":"$p'($|[^0-9])' '$4 ~ pat' | grep -q . && return 0 || return 1
   elif command -v lsof >/dev/null 2>&1; then
     lsof -nP -iTCP:"${p}" -sTCP:LISTEN >/dev/null 2>&1 && return 0 || return 1
   elif command -v netstat >/dev/null 2>&1; then
-    netstat -lnt 2>/dev/null | awk '{print $4}' | grep -E "[:.]${p}$" -q && return 0 || return 1
+    # macOS/BSD: netstat -anv; Linux: netstat -lnt
+    if netstat -anv 2>/dev/null | grep -E "LISTEN" >/dev/null 2>&1; then
+      netstat -anv 2>/dev/null | awk '{print $4,$6}' | grep -E "[:\.]${p}($|[^0-9]).*LISTEN" -q && return 0 || return 1
+    else
+      netstat -lnt 2>/dev/null | awk '{print $4}' | grep -E "[:\.]${p}($|[^0-9])" -q && return 0 || return 1
+    fi
   else
+    # As a last resort, assume free to avoid hard failure on minimal systems
     return 1
   fi
 }
@@ -44,13 +52,17 @@ pids_on_port() {
   elif command -v fuser >/dev/null 2>&1; then
     fuser -n tcp "${p}" 2>/dev/null | tr ' ' '\n' || true
   elif command -v ss >/dev/null 2>&1; then
-    ss -lptn "( sport = :${p} )" 2>/dev/null | sed -n '2,$p' | sed -E 's/.*pid=([0-9]+),.*/\1/' | sort -u || true
+    ss -lptn 2>/dev/null | awk -v pat=":"$p'($|[^0-9])' '$4 ~ pat {print $6}' | \
+      sed -n 's/.*pid=\([0-9]\+\).*/\1/p' | sort -u || true
   else
     true
   fi
 }
 
-docker_ok() { command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; }
+# --- Docker helpers ----------------------------------------------------------
+docker_ok() {
+  command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1
+}
 
 stop_wb_container() {
   if docker_ok; then
@@ -64,7 +76,7 @@ stop_wb_container() {
 
 stop_containers_on_port() {
   if ! docker_ok; then return 0; fi
-  # Find any running container mapping host port :${PORT} to 6379 inside
+  # Find any running container mapping host port :${PORT}
   local ids
   ids=$(docker ps --format '{{.ID}} {{.Ports}}' | awk -v pat=":${PORT}->" '$0 ~ pat {print $1}')
   if [ -n "${ids}" ]; then
@@ -80,17 +92,18 @@ stop_containers_on_port() {
   fi
 }
 
+# --- Local process killer ----------------------------------------------------
 kill_local_redis() {
   # Prefer killing redis-server specifically
   local rpids
-  rpids=$(pgrep -f 'redis-server' || true)
+  rpids=$(pgrep -f 'redis-server' 2>/dev/null || true)
   if [ -n "${rpids}" ]; then
     log "🛑 Terminating local redis-server processes: ${rpids}"
     # shellcheck disable=SC2086
     kill ${rpids} 2>/dev/null || true
     sleep 1
   fi
-  # Also kill any process listening on the port
+  # Also kill any process listening on the target port
   local ppids
   ppids=$(pids_on_port "${PORT}")
   if [ -n "${ppids}" ]; then
@@ -109,9 +122,10 @@ kill_local_redis() {
   fi
 }
 
+# --- Verification ------------------------------------------------------------
 verify_free() {
   log "⏳ Verifying port ${PORT} is free ..."
-  for i in $(seq 1 10); do
+  for _ in $(seq 1 10); do
     if ! port_in_use "${PORT}"; then
       ok "Port ${PORT} is free."
       return 0
@@ -125,6 +139,7 @@ verify_free() {
   fi
 }
 
+# --- Orchestration -----------------------------------------------------------
 log "🧹 Killing ANY Redis on port ${PORT}"
 # 1) Use project script if available (removes wb-redis cleanly)
 if [ -x "${ROOT_DIR}/scripts/redis_down.sh" ]; then

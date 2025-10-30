@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
+# Cross‑platform RQ worker launcher (macOS/Linux + Windows via Git Bash/WSL)
+# - DOES NOT reinstall or modify .venv
+# - Uses existing virtualenv if found (but never creates/updates it)
+# - Waits for Redis using stdlib sockets (no redis-py dependency)
+# - Ensures default worker name is unique without touching Redis
+# - Picks the correct RQ logging flag regardless of RQ version
+#
+# Usage examples:
+#   bash scripts/rq_worker.sh
+#   REDIS_URL=redis://localhost:6380/0 RQ_QUEUES="high default" bash scripts/rq_worker.sh
+#   RQ_WORKER_NAME=my-worker bash scripts/rq_worker.sh
+
 set -euo pipefail
 
+# --- Paths -------------------------------------------------------------------
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VENV="${VENV:-${ROOT_DIR}/.venv}"
+VENV_DEFAULT="${ROOT_DIR}/.venv"
+VENV="${VENV:-${VENV_DEFAULT}}"
 
-# Load .env if present
+# --- Load optional .env ------------------------------------------------------
 if [ -f "${ROOT_DIR}/.env" ]; then
   set -a
   # shellcheck source=/dev/null
@@ -12,15 +26,18 @@ if [ -f "${ROOT_DIR}/.env" ]; then
   set +a
 fi
 
-# Defaults
+# --- Defaults ----------------------------------------------------------------
 REDIS_URL="${REDIS_URL:-redis://localhost:6379/0}"
+# Support legacy RQ_QUEUE then RQ_QUEUES (space‑separated list)
 RQ_QUEUES="${RQ_QUEUES:-${RQ_QUEUE:-jobs}}"
-# Default worker name is unique to avoid collisions with Docker workers, etc.
-DEFAULT_WORKER_NAME="local-worker-$(hostname 2>/dev/null || echo host)-$$"
-RQ_WORKER_NAME="${RQ_WORKER_NAME:-$DEFAULT_WORKER_NAME}"
-RQ_LOG_LEVEL="${RQ_LOG_LEVEL:-INFO}"   # DEBUG|INFO|WARNING|ERROR|CRITICAL
 
-# --- Platform detection helpers ---
+# Unique default worker name to avoid collisions (no Redis lookup needed)
+HOSTTAG="$(hostname 2>/dev/null || echo host)"
+DEFAULT_WORKER_NAME="local-worker-${HOSTTAG}-${PPID:-$$}-${RANDOM}"
+RQ_WORKER_NAME="${RQ_WORKER_NAME:-${DEFAULT_WORKER_NAME}}"
+RQ_LOG_LEVEL="${RQ_LOG_LEVEL:-INFO}"    # DEBUG|INFO|WARNING|ERROR|CRITICAL
+
+# --- Platform helpers --------------------------------------------------------
 UNAME_S="$(uname -s || true)"
 is_wsl() { grep -qi microsoft /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}" ]; }
 is_windows() {
@@ -30,90 +47,85 @@ is_windows() {
   esac
 }
 
-# Choose worker class cross-platform:
-# - macOS/WSL/Windows: SimpleWorker (no fork) – safest
-# - Linux: SimpleWorker too unless overridden via RQ_WORKER_CLASS
+# Choose worker class (SimpleWorker is safest across platforms)
 if [[ -z "${RQ_WORKER_CLASS:-}" ]]; then
-  if [[ "${UNAME_S}" == "Darwin" ]] || is_wsl || is_windows; then
-    RQ_WORKER_CLASS="rq.worker.SimpleWorker"
+  RQ_WORKER_CLASS="rq.worker.SimpleWorker"
+fi
+
+# --- Activate virtualenv if present (never creates/updates it) ---------------
+if [ -f "${VENV}/bin/activate" ]; then
+  # POSIX layout
+  # shellcheck source=/dev/null
+  source "${VENV}/bin/activate"
+elif [ -f "${VENV}/Scripts/activate" ]; then
+  # Windows venv (Git Bash layout)
+  # shellcheck source=/dev/null
+  # shellcheck disable=SC1091
+  source "${VENV}/Scripts/activate"
+fi
+
+# Ensure PYTHONPATH contains project root so jobs can import local code
+export PYTHONPATH="${ROOT_DIR}:${PYTHONPATH:-}"
+export REDIS_URL RQ_QUEUES RQ_WORKER_CLASS RQ_WORKER_NAME RQ_LOG_LEVEL
+
+# --- Tool checks -------------------------------------------------------------
+# Use rq if available; otherwise try python -m rq to avoid Windows shim issues
+RQ_INVOKE=(rq)
+if ! command -v rq >/dev/null 2>&1; then
+  if command -v python >/dev/null 2>&1 && python - <<'PY' >/dev/null 2>&1; then
+import importlib, sys
+mod = importlib.util.find_spec("rq") or importlib.util.find_spec("rq.cli")
+sys.exit(0 if mod else 1)
+PY
+  then
+    RQ_INVOKE=(python -m rq)
   else
-    RQ_WORKER_CLASS="rq.worker.SimpleWorker"
+    echo "ERROR: 'rq' not found on PATH and 'python -m rq' is unavailable." >&2
+    echo "       Activate your venv or install RQ (e.g., 'pip install rq')." >&2
+    exit 1
   fi
 fi
 
-# Activate venv if present
-if [ -f "${VENV}/bin/activate" ]; then
-  # shellcheck source=/dev/null
-  source "${VENV}/bin/activate"
-fi
-
-export PYTHONPATH="${ROOT_DIR}:${PYTHONPATH:-}"
-export REDIS_URL RQ_QUEUES RQ_WORKER_CLASS
-
-if ! command -v rq >/dev/null 2>&1; then
-  echo "❌ 'rq' not found. Install it: pip install rq"
-  exit 1
-fi
-
-# macOS fork-safety workaround (extra guard; SimpleWorker already avoids fork)
+# macOS fork-safety workaround (SimpleWorker already avoids fork)
 if [[ "${UNAME_S}" == "Darwin" ]]; then
   export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 fi
 
-# Optional: wait for Redis to be reachable
-echo "⏳ Waiting for Redis at ${REDIS_URL} ..."
-python - <<'PY' || { echo "❌ Could not connect to Redis."; exit 1; }
-import os, time, sys
-import redis
+# --- Wait for Redis to be reachable (no redis-py required) -------------------
+echo "Waiting for Redis at ${REDIS_URL} ..."
+python - <<'PY'
+import os, sys, time, socket, urllib.parse
 url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-r = redis.Redis.from_url(url, socket_connect_timeout=1, socket_timeout=1)
+p = urllib.parse.urlparse(url)
+host = p.hostname or "localhost"
+port = p.port or 6379
 for _ in range(30):
     try:
-        if r.ping():
+        with socket.create_connection((host, port), timeout=1):
             sys.exit(0)
-    except Exception:
+    except OSError:
         time.sleep(1)
-print("Failed to ping Redis after 30s")
+print("Failed to connect to Redis after 30s")
 sys.exit(1)
 PY
 
-# If a fixed RQ_WORKER_NAME was provided and is already taken, append a suffix.
-# (By default we already use a unique name.)
-export _RQ_NAME_CHECK="${RQ_WORKER_NAME}"
-if python - <<'PY'
-import os, sys, redis
-name = os.environ["_RQ_NAME_CHECK"]
-url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-r = redis.Redis.from_url(url)
-# RQ stores worker info under key "rq:worker:<name>"
-exists = r.exists(f"rq:worker:{name}")
-sys.exit(10 if exists else 0)
-PY
-then
-  : # name is free
-else
-  # 10 means name exists; generate a unique suffix
-  if [[ $? -eq 10 ]]; then
-    suffix="$(hostname 2>/dev/null || echo host)-$$-$RANDOM"
-    echo "⚠️  Worker name '${RQ_WORKER_NAME}' already exists. Using '${RQ_WORKER_NAME}-${suffix}'."
-    RQ_WORKER_NAME="${RQ_WORKER_NAME}-${suffix}"
-  else
-    echo "⚠️  Could not verify worker name uniqueness; proceeding with '${RQ_WORKER_NAME}'."
-  fi
+# --- Determine correct logging flag for current RQ version -------------------
+RQ_LOG_FLAG="--logging_level"
+if "${RQ_INVOKE[@]}" worker --help 2>&1 | grep -q -- "--logging-level"; then
+  RQ_LOG_FLAG="--logging-level"
 fi
-unset _RQ_NAME_CHECK
 
-echo "🔗 Starting RQ worker name=${RQ_WORKER_NAME}, queues=${RQ_QUEUES}, url=${REDIS_URL}"
+# --- Start worker ------------------------------------------------------------
+echo "Starting RQ worker name=${RQ_WORKER_NAME}, queues=${RQ_QUEUES}, url=${REDIS_URL}"
 echo "   Worker class: ${RQ_WORKER_CLASS}"
 
 # Split queues on spaces
-read -r -a _QUEUES <<< "${RQ_QUEUES}"
+# shellcheck disable=SC2206
+_QUEUES=( ${RQ_QUEUES} )
 
-# NOTE: RQ CLI expects --logging_level (underscore), not --logging-level
-exec rq worker \
-  --url "${REDIS_URL}" \
-  --name "${RQ_WORKER_NAME}" \
-  --worker-class "${RQ_WORKER_CLASS}" \
-  --logging_level "${RQ_LOG_LEVEL}" \
-  -P "${ROOT_DIR}" \
-  "${_QUEUES[@]}"
+# Build command (array-safe)
+cmd=("${RQ_INVOKE[@]}" worker --url "${REDIS_URL}" --name "${RQ_WORKER_NAME}" \
+     --worker-class "${RQ_WORKER_CLASS}" "${RQ_LOG_FLAG}" "${RQ_LOG_LEVEL}" -P "${ROOT_DIR}")
+
+# Exec
+exec "${cmd[@]}" "${_QUEUES[@]}"
